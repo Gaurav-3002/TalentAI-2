@@ -125,8 +125,8 @@ class JobMatchingAPITester:
         
         # Test user registration
         test_user_data = {
-            "email": "testuser@example.com",
-            "full_name": "Test User",
+            "email": "testcandidate@example.com",
+            "full_name": "Test Candidate User",
             "password": "testpass123",
             "role": "candidate"
         }
@@ -154,7 +154,7 @@ class JobMatchingAPITester:
         
         # Test user login
         login_data = {
-            "email": "testuser@example.com",
+            "email": "testcandidate@example.com",
             "password": "testpass123"
         }
         
@@ -173,7 +173,7 @@ class JobMatchingAPITester:
         
         # Test invalid login
         invalid_login = {
-            "email": "testuser@example.com",
+            "email": "testcandidate@example.com",
             "password": "wrongpassword"
         }
         
@@ -272,6 +272,40 @@ class JobMatchingAPITester:
                 auth_token=self.auth_tokens['admin']
             )
 
+    def test_user_management(self):
+        """Test user management endpoints"""
+        print("\n" + "="*50)
+        print("TESTING USER MANAGEMENT")
+        print("="*50)
+        
+        # Test getting current user info
+        if 'admin' in self.auth_tokens:
+            success, response = self.run_test(
+                "Get current user info (admin)",
+                "GET",
+                "auth/me",
+                200,
+                auth_token=self.auth_tokens['admin']
+            )
+            
+            if success:
+                print(f"   Admin user info: {response.get('full_name')} ({response.get('role')})")
+        
+        # Test getting all users (admin only)
+        if 'admin' in self.auth_tokens:
+            success, users = self.run_test(
+                "Get all users (admin only)",
+                "GET",
+                "users",
+                200,
+                auth_token=self.auth_tokens['admin']
+            )
+            
+            if success:
+                print(f"   Found {len(users)} total users in system")
+                for user in users[:3]:  # Show first 3 users
+                    print(f"   User: {user.get('full_name')} ({user.get('role')}) - {user.get('email')}")
+
     def test_protected_endpoints(self):
         """Test that protected endpoints require proper authentication and roles"""
         print("\n" + "="*50)
@@ -339,7 +373,7 @@ class JobMatchingAPITester:
             print("❌ No recruiter token available, skipping authenticated resume tests")
             return
         
-        # Test case 1: High-skill candidate (Alice Johnson equivalent)
+        # Test case 1: High-skill candidate
         resume_data = {
             'name': 'Alice Johnson',
             'email': 'alice.johnson@example.com',
@@ -367,6 +401,33 @@ class JobMatchingAPITester:
             self.created_candidates.append(response['candidate_id'])
             print(f"   Extracted skills: {response.get('extracted_skills', [])}")
             print(f"   Experience years: {response.get('experience_years', 0)}")
+        
+        # Test case 2: Marketing candidate
+        resume_data_marketing = {
+            'name': 'Bob Smith',
+            'email': 'bob.smith@example.com',
+            'resume_text': '''
+            Marketing Manager with 5 years of experience in social media campaigns, 
+            content creation, and brand management. Strong communication skills.
+            Education: Bachelor's in Marketing.
+            ''',
+            'skills': 'Marketing, Social Media, Content Creation',
+            'experience_years': 5,
+            'education': "Bachelor's in Marketing"
+        }
+        
+        success, response = self.run_test(
+            "Upload marketing resume (authenticated)", 
+            "POST", 
+            "resume", 
+            200, 
+            data=resume_data_marketing,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'candidate_id' in response:
+            self.created_candidates.append(response['candidate_id'])
 
     def test_job_posting_authenticated(self):
         """Test job posting creation with proper authentication"""
@@ -538,201 +599,7 @@ class JobMatchingAPITester:
         if success and candidates:
             print(f"   Retrieved {len(candidates)} candidates in blind mode")
 
-    def test_user_management(self):
-        """Test user management endpoints"""
-        print("\n" + "="*50)
-        print("TESTING USER MANAGEMENT")
-        print("="*50)
-        
-        # Test getting current user info
-        if 'admin' in self.auth_tokens:
-            success, response = self.run_test(
-                "Get current user info (admin)",
-                "GET",
-                "auth/me",
-                200,
-                auth_token=self.auth_tokens['admin']
-            )
-            
-            if success:
-                print(f"   Admin user info: {response.get('full_name')} ({response.get('role')})")
-        
-        # Test getting all users (admin only)
-        if 'admin' in self.auth_tokens:
-            success, users = self.run_test(
-                "Get all users (admin only)",
-                "GET",
-                "users",
-                200,
-                auth_token=self.auth_tokens['admin']
-            )
-            
-            if success:
-                print(f"   Found {len(users)} total users in system")
-                for user in users[:3]:  # Show first 3 users
-                    print(f"   User: {user.get('full_name')} ({user.get('role')}) - {user.get('email')}")
-
-    def test_basic_endpoints(self):
-        """Test basic API endpoints"""
-        print("\n" + "="*50)
-        print("TESTING BASIC ENDPOINTS")
-        print("="*50)
-        
-        # Test root endpoint
-        success, _ = self.run_test("Root endpoint", "GET", "", 200)
-        
-        # Test candidates endpoint (should require auth now)
-        success, candidates = self.run_test("Get candidates without auth (should fail)", "GET", "candidates", 401)
-            
-        # Test jobs endpoint (should require auth now)
-        success, jobs = self.run_test("Get jobs without auth (should fail)", "GET", "jobs", 401)
-
-    def test_resume_upload_text(self):
-        """Test resume upload with text input"""
-        print("\n" + "="*50)
-        print("TESTING RESUME UPLOAD (TEXT)")
-        print("="*50)
-        
-        # Test case 1: High-skill candidate (Alice Johnson equivalent)
-        resume_data = {
-            'name': 'Test Alice Johnson',
-            'email': 'test.alice@example.com',
-            'resume_text': '''
-            Senior Full Stack Developer with 8 years of experience in JavaScript, React, Node.js, Python, 
-            MongoDB, AWS, Docker, and machine learning. Expert in building scalable web applications.
-            Education: Master's in Computer Science from Stanford University.
-            ''',
-            'skills': 'JavaScript, React, Node.js, Python, MongoDB, AWS, Docker, Machine Learning',
-            'experience_years': 8,
-            'education': "Master's in Computer Science"
-        }
-        
-        success, response = self.run_test(
-            "Upload high-skill resume", 
-            "POST", 
-            "resume", 
-            200, 
-            data=resume_data,
-            form_data=True  # Use form data instead of files={}
-        )
-        
-        if success and 'candidate_id' in response:
-            self.created_candidates.append(response['candidate_id'])
-            print(f"   Extracted skills: {response.get('extracted_skills', [])}")
-            print(f"   Experience years: {response.get('experience_years', 0)}")
-        
-        # Test case 2: Low-skill candidate (Bob Smith equivalent)
-        resume_data_low = {
-            'name': 'Test Bob Smith',
-            'email': 'test.bob@example.com',
-            'resume_text': '''
-            Marketing Manager with 5 years of experience in social media campaigns, 
-            content creation, and brand management. Strong communication skills.
-            Education: Bachelor's in Marketing.
-            ''',
-            'skills': 'Marketing, Social Media, Content Creation',
-            'experience_years': 5,
-            'education': "Bachelor's in Marketing"
-        }
-        
-        success, response = self.run_test(
-            "Upload low-skill resume", 
-            "POST", 
-            "resume", 
-            200, 
-            data=resume_data_low,
-            form_data=True
-        )
-        
-        if success and 'candidate_id' in response:
-            self.created_candidates.append(response['candidate_id'])
-        
-        # Test case 3: Partial-skill candidate (Carol Davis equivalent)
-        resume_data_partial = {
-            'name': 'Test Carol Davis',
-            'email': 'test.carol@example.com',
-            'resume_text': '''
-            Junior Frontend Developer with 2 years of experience in HTML, CSS, JavaScript, 
-            and React. Learning backend technologies.
-            Education: Bachelor's in Computer Science.
-            ''',
-            'skills': 'HTML, CSS, JavaScript, React',
-            'experience_years': 2,
-            'education': "Bachelor's in Computer Science"
-        }
-        
-        success, response = self.run_test(
-            "Upload partial-skill resume", 
-            "POST", 
-            "resume", 
-            200, 
-            data=resume_data_partial,
-            form_data=True
-        )
-        
-        if success and 'candidate_id' in response:
-            self.created_candidates.append(response['candidate_id'])
-
-    def test_job_posting(self):
-        """Test job posting creation"""
-        print("\n" + "="*50)
-        print("TESTING JOB POSTING")
-        print("="*50)
-        
-        # Test case 1: Senior Full Stack Developer job
-        job_data = {
-            'title': 'Senior Full Stack Developer',
-            'company': 'Tech Innovations Inc',
-            'required_skills': ['JavaScript', 'React', 'Node.js', 'Python', 'MongoDB', 'AWS'],
-            'location': 'San Francisco, CA',
-            'salary': '$120,000 - $160,000',
-            'description': '''
-            We are looking for a Senior Full Stack Developer with expertise in modern web technologies.
-            The ideal candidate should have experience with JavaScript, React, Node.js, Python, MongoDB, and AWS.
-            Minimum 5 years of experience required.
-            ''',
-            'min_experience_years': 5
-        }
-        
-        success, response = self.run_test(
-            "Create senior developer job", 
-            "POST", 
-            "job", 
-            200, 
-            data=job_data
-        )
-        
-        if success and 'id' in response:
-            self.created_jobs.append(response['id'])
-            print(f"   Required skills: {response.get('required_skills', [])}")
-            print(f"   Min experience: {response.get('min_experience_years', 0)} years")
-        
-        # Test case 2: Junior React Developer job
-        job_data_junior = {
-            'title': 'Junior React Developer',
-            'company': 'StartupCorp',
-            'required_skills': ['JavaScript', 'React', 'HTML', 'CSS'],
-            'location': 'Remote',
-            'salary': '$60,000 - $80,000',
-            'description': '''
-            Entry-level position for a React Developer. Perfect for recent graduates or 
-            developers with 1-2 years of experience in frontend technologies.
-            ''',
-            'min_experience_years': 1
-        }
-        
-        success, response = self.run_test(
-            "Create junior developer job", 
-            "POST", 
-            "job", 
-            200, 
-            data=job_data_junior
-        )
-        
-        if success and 'id' in response:
-            self.created_jobs.append(response['id'])
-
-    def test_candidate_search(self):
+    def test_candidate_search_authenticated(self):
         """Test candidate search and matching with authentication"""
         print("\n" + "="*50)
         print("TESTING AUTHENTICATED CANDIDATE SEARCH")
@@ -768,36 +635,23 @@ class JobMatchingAPITester:
                 print(f"      Matched Skills: {result['score_breakdown']['matched_skills']}")
                 print(f"      Missing Skills: {result['score_breakdown']['missing_skills']}")
                 print()
-        
-        # Test search with blind screening
-        success, blind_results = self.run_test(
-            "Search candidates with blind screening",
-            "GET",
-            f"search?job_id={job_id}&k=5&blind_screening=true",
-            200,
-            auth_token=self.auth_tokens['recruiter']
-        )
-        
-        if success and blind_results:
-            print(f"   Blind screening returned {len(blind_results)} candidates")
-            for result in blind_results[:2]:
-                print(f"   Blind candidate: {result['candidate_name']} | {result['candidate_email']}")
-        
-        # Test search with different k value
-        if len(self.created_jobs) > 1:
-            job_id = self.created_jobs[1]  # Junior React Developer
-            success, results = self.run_test(
-                "Search candidates for junior role", 
-                "GET", 
-                f"search?job_id={job_id}&k=5", 
-                200,
-                auth_token=self.auth_tokens['recruiter']
-            )
-            
-            if success and results:
-                print(f"   Found {len(results)} matching candidates for junior role")
 
-    def test_individual_endpoints(self):
+    def test_basic_endpoints(self):
+        """Test basic API endpoints"""
+        print("\n" + "="*50)
+        print("TESTING BASIC ENDPOINTS")
+        print("="*50)
+        
+        # Test root endpoint
+        success, _ = self.run_test("Root endpoint", "GET", "", 200)
+        
+        # Test candidates endpoint without auth (should fail)
+        success, _ = self.run_test("Get candidates without auth (should fail)", "GET", "candidates", 401)
+            
+        # Test jobs endpoint without auth (should fail)
+        success, _ = self.run_test("Get jobs without auth (should fail)", "GET", "jobs", 401)
+
+    def test_individual_endpoints_authenticated(self):
         """Test individual candidate and job retrieval with authentication"""
         print("\n" + "="*50)
         print("TESTING INDIVIDUAL ENDPOINTS (AUTHENTICATED)")
@@ -860,36 +714,42 @@ class JobMatchingAPITester:
             print(f"   Retrieved {len(jobs)} jobs from list endpoint")
 
     def test_error_cases(self):
-        """Test error handling"""
+        """Test error handling with authentication"""
         print("\n" + "="*50)
         print("TESTING ERROR CASES")
         print("="*50)
         
-        # Test resume upload without required fields
-        success, _ = self.run_test(
-            "Resume upload without name", 
-            "POST", 
-            "resume", 
-            422,  # Validation error
-            data={'email': 'test@example.com'},
-            form_data=True
-        )
+        # Test resume upload without required fields (with auth)
+        if 'recruiter' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Resume upload without name (authenticated)", 
+                "POST", 
+                "resume", 
+                422,  # Validation error
+                data={'email': 'test@example.com'},
+                form_data=True,
+                auth_token=self.auth_tokens['recruiter']
+            )
         
-        # Test search with invalid job ID
-        success, _ = self.run_test(
-            "Search with invalid job ID", 
-            "GET", 
-            "search?job_id=invalid-id&k=10", 
-            404
-        )
+        # Test search with invalid job ID (with auth)
+        if 'recruiter' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Search with invalid job ID (authenticated)", 
+                "GET", 
+                "search?job_id=invalid-id&k=10", 
+                404,
+                auth_token=self.auth_tokens['recruiter']
+            )
         
-        # Test get non-existent candidate
-        success, _ = self.run_test(
-            "Get non-existent candidate", 
-            "GET", 
-            "candidates/non-existent-id", 
-            404
-        )
+        # Test get non-existent candidate (with auth)
+        if 'recruiter' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Get non-existent candidate (authenticated)", 
+                "GET", 
+                "candidates/non-existent-id", 
+                404,
+                auth_token=self.auth_tokens['recruiter']
+            )
 
     def run_all_tests(self):
         """Run all tests including Sprint 6 security features"""
@@ -897,7 +757,7 @@ class JobMatchingAPITester:
         print(f"🌐 Base URL: {self.base_url}")
         
         try:
-            # Sprint 6 Security Tests
+            # Sprint 6 Security Tests (Priority Order)
             self.test_seeded_users()
             self.test_authentication_system()
             self.test_jwt_token_validation()
@@ -910,11 +770,11 @@ class JobMatchingAPITester:
             self.test_job_posting_authenticated()
             self.test_access_logging()
             self.test_pii_redaction_blind_screening()
+            self.test_candidate_search_authenticated()
             
-            # Basic functionality tests (legacy)
+            # Basic functionality tests
             self.test_basic_endpoints()
-            self.test_candidate_search()
-            self.test_individual_endpoints()
+            self.test_individual_endpoints_authenticated()
             self.test_error_cases()
             
             # Print final results
