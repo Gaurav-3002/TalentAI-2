@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 class JobMatchingAPITester:
-    def __init__(self, base_url="https://3f01d4cf-9030-480f-8816-3ce6ec52472c.preview.emergentagent.com"):
+    def __init__(self, base_url="https://111e2f63-d76f-446c-a92e-778e5a0c41fa.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
