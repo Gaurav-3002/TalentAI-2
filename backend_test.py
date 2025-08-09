@@ -13,7 +13,7 @@ class JobMatchingAPITester:
         self.created_candidates = []
         self.created_jobs = []
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, files=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, files=None, form_data=False):
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}"
         headers = {}
@@ -26,7 +26,8 @@ class JobMatchingAPITester:
             if method == 'GET':
                 response = requests.get(url, headers=headers)
             elif method == 'POST':
-                if files:
+                if files or form_data:
+                    # Send as form data (multipart/form-data)
                     response = requests.post(url, data=data, files=files)
                 elif data:
                     headers['Content-Type'] = 'application/json'
