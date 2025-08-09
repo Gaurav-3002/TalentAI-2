@@ -209,40 +209,41 @@ const SearchCandidates = () => {
               
               <Grid item xs={12} md={2}>
                 <Button
-                variant="contained"
-                size="large"
-                fullWidth
-                onClick={handleSearch}
-                disabled={searching || !selectedJob}
-                startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
-                sx={{ py: 1.5 }}
-              >
-                {searching ? 'Searching...' : 'Search'}
-              </Button>
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  onClick={handleSearch}
+                  disabled={searching || !selectedJob}
+                  startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
+                  sx={{ py: 1.5 }}
+                >
+                  {searching ? 'Searching...' : 'Search'}
+                </Button>
+              </Grid>
+
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error">
+                    {error}
+                  </Alert>
+                </Grid>
+              )}
             </Grid>
 
-            {error && (
-              <Grid item xs={12}>
-                <Alert severity="error">
-                  {error}
+            {blindScreening && (
+              <>
+                <Divider sx={{ mt: 3, mb: 2 }} />
+                <Alert severity="info" sx={{ backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
+                  <Typography variant="body2">
+                    <strong>🔒 Blind Screening Active:</strong> Candidate personal information (names and emails) will be masked to reduce unconscious bias. 
+                    Skills, experience, and match scores remain visible for fair evaluation.
+                  </Typography>
                 </Alert>
-              </Grid>
+              </>
             )}
-          </Grid>
-
-          {blindScreening && (
-            <>
-              <Divider sx={{ mt: 3, mb: 2 }} />
-              <Alert severity="info" sx={{ backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
-                <Typography variant="body2">
-                  <strong>🔒 Blind Screening Active:</strong> Candidate personal information (names and emails) will be masked to reduce unconscious bias. 
-                  Skills, experience, and match scores remain visible for fair evaluation.
-                </Typography>
-              </Alert>
-            </>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Results */}
       <CandidateList
