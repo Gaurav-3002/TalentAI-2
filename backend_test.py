@@ -737,22 +737,27 @@ class JobMatchingAPITester:
             self.created_jobs.append(response['id'])
 
     def test_candidate_search(self):
-        """Test candidate search and matching"""
+        """Test candidate search and matching with authentication"""
         print("\n" + "="*50)
-        print("TESTING CANDIDATE SEARCH")
+        print("TESTING AUTHENTICATED CANDIDATE SEARCH")
         print("="*50)
         
         if not self.created_jobs:
             print("❌ No jobs created, skipping search tests")
             return
+            
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping search tests")
+            return
         
         # Test search for senior developer position
         job_id = self.created_jobs[0]  # Senior Full Stack Developer
         success, results = self.run_test(
-            "Search candidates for senior role", 
+            "Search candidates for senior role (authenticated)", 
             "GET", 
             f"search?job_id={job_id}&k=10", 
-            200
+            200,
+            auth_token=self.auth_tokens['recruiter']
         )
         
         if success and results:
@@ -768,6 +773,20 @@ class JobMatchingAPITester:
                 print(f"      Missing Skills: {result['score_breakdown']['missing_skills']}")
                 print()
         
+        # Test search with blind screening
+        success, blind_results = self.run_test(
+            "Search candidates with blind screening",
+            "GET",
+            f"search?job_id={job_id}&k=5&blind_screening=true",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and blind_results:
+            print(f"   Blind screening returned {len(blind_results)} candidates")
+            for result in blind_results[:2]:
+                print(f"   Blind candidate: {result['candidate_name']} | {result['candidate_email']}")
+        
         # Test search with different k value
         if len(self.created_jobs) > 1:
             job_id = self.created_jobs[1]  # Junior React Developer
@@ -775,7 +794,8 @@ class JobMatchingAPITester:
                 "Search candidates for junior role", 
                 "GET", 
                 f"search?job_id={job_id}&k=5", 
-                200
+                200,
+                auth_token=self.auth_tokens['recruiter']
             )
             
             if success and results:
