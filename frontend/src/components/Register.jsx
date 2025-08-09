@@ -70,7 +70,7 @@ const Register = () => {
     }
 
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const result = await register({
