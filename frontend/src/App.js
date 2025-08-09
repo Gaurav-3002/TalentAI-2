@@ -596,13 +596,21 @@ const SearchCandidates = () => {
 
     setSearching(true);
     setError(null);
+    setResults([]); // Clear previous results
     
     try {
       const response = await axios.get(`${API}/search?job_id=${selectedJob}&k=${k}`);
-      setResults(response.data);
+      console.log('Search response:', response.data); // Debug log
+      if (response.data && Array.isArray(response.data)) {
+        setResults(response.data);
+      } else {
+        setResults([]);
+        setError('No results returned from search');
+      }
     } catch (error) {
       console.error('Error searching candidates:', error);
       setError(error.response?.data?.detail || 'Search failed');
+      setResults([]);
     } finally {
       setSearching(false);
     }
