@@ -53,9 +53,22 @@ const CandidateList = ({
   // Empty state
   if (!hasData) {
     return (
-      <Paper elevation={1} sx={{ p: 8, textAlign: 'center', bgcolor: 'grey.50' }}>
+      <Paper elevation={1} sx={{ p: 6, textAlign: 'center', bgcolor: 'grey.50' }}>
         {isSearchResults ? (
-          <SearchOffIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+          <>
+            <Box
+              component="img"
+              src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/gdn5uo0b_choice-worker-concept-illustrated_52683-44076.avif"
+              alt="No candidates found"
+              sx={{
+                width: '100%',
+                maxWidth: 200,
+                height: 'auto',
+                mb: 2,
+                borderRadius: 1,
+              }}
+            />
+          </>
         ) : (
           <PeopleIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
         )}
