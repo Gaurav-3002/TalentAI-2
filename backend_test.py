@@ -314,7 +314,8 @@ class JobMatchingAPITester:
             "POST", 
             "resume", 
             422,  # Validation error
-            data={'email': 'test@example.com'}
+            data={'email': 'test@example.com'},
+            form_data=True
         )
         
         # Test search with invalid job ID
