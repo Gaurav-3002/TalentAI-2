@@ -255,70 +255,29 @@ def calculate_experience_match(candidate_years: int, required_years: int) -> flo
     else:
         return candidate_years / required_years
 
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-class Candidate(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    email: str
-    skills: List[str] = []
-    experience_years: int = 0
-    education: str = ""
-    resume_text: str
-    embedding: List[float] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class CandidateCreate(BaseModel):
-    name: str
-    email: str
-    resume_text: str
-    skills: Optional[List[str]] = []
-    experience_years: Optional[int] = 0
-    education: Optional[str] = ""
-
-class JobPosting(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str
-    company: str
-    required_skills: List[str] = []
-    location: str = ""
-    salary: str = ""
-    description: str
-    min_experience_years: int = 0
-    embedding: List[float] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class JobPostingCreate(BaseModel):
-    title: str
-    company: str
-    required_skills: List[str]
-    location: Optional[str] = ""
-    salary: Optional[str] = ""
-    description: str
-    min_experience_years: Optional[int] = 0
-
-class MatchResult(BaseModel):
-    candidate_id: str
-    candidate_name: str
-    candidate_email: str
-    candidate_skills: List[str]
-    candidate_experience_years: int
-    total_score: float
-    semantic_score: float
-    skill_overlap_score: float
-    experience_match_score: float
-    score_breakdown: Dict[str, Any]
-
-class SearchRequest(BaseModel):
-    job_id: str
-    k: int = 10
+# Helper function to log candidate access
+async def log_candidate_access(
+    user: TokenData, 
+    candidate: Candidate, 
+    reason: AccessReason, 
+    details: Optional[str] = None,
+    request: Optional[Request] = None
+):
+    """Log access to candidate information for compliance"""
+    access_log = AccessLog(
+        user_id=user.user_id,
+        user_email=user.email,
+        user_role=user.role,
+        candidate_id=candidate.id,
+        candidate_name=candidate.name,
+        candidate_email=candidate.email,
+        access_reason=reason,
+        access_details=details,
+        ip_address=request.client.host if request else None,
+        user_agent=request.headers.get("user-agent") if request else None
+    )
+    await db.access_logs.insert_one(access_log.dict())
+    return access_log
 
 # File processing functions
 def extract_text_from_pdf(file_content: bytes) -> str:
