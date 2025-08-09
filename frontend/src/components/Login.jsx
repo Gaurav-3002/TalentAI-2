@@ -60,6 +60,20 @@ const Login = () => {
     }
   };
 
+  const handleGuestLogin = () => {
+    setLoading(true);
+    try {
+      const result = loginAsGuest();
+      if (result.success) {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err) {
+      setError('Guest login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDemoLogin = async (email, password, role) => {
     setLoading(true);
     setError('');
@@ -142,6 +156,35 @@ const Login = () => {
                 'Sign In'
               )}
             </Button>
+          </Box>
+
+          <Divider sx={{ my: 3 }}>
+            <Chip label="Quick Access" size="small" />
+          </Divider>
+
+          <Box sx={{ mb: 3 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              size="large"
+              disabled={loading}
+              onClick={handleGuestLogin}
+              sx={{ 
+                py: 1.5,
+                borderColor: 'success.main',
+                color: 'success.main',
+                '&:hover': {
+                  borderColor: 'success.dark',
+                  backgroundColor: 'success.light',
+                  color: 'success.contrastText'
+                }
+              }}
+            >
+              🎯 Continue as Guest (Demo Access)
+            </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+              Limited access - View jobs and search candidates only
+            </Typography>
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
