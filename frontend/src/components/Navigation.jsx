@@ -27,7 +27,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const Navigation = () => {
-  const { isAuthenticated, user, logout, isAdmin, isRecruiter, isCandidate } = useAuth();
+  const { isAuthenticated, user, logout, isAdmin, isRecruiter, isCandidate, isGuestUser } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
 
