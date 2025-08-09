@@ -158,91 +158,147 @@ const Dashboard = () => {
 
       {/* Recent Data - Only show to recruiters */}
       {isRecruiter() && (
-        <Grid container spacing={3}>
-          {/* Recent Candidates */}
-          <Grid item xs={12} md={6}>
-            <Card elevation={2}>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Recent Candidates
-                </Typography>
-                <CandidateList
-                  candidates={recentCandidates}
-                  title=""
-                  emptyMessage="No candidates yet. Start by having candidates upload resumes!"
-                  blindMode={false}
+        <>
+          {/* Show main empty state if no candidates and no jobs */}
+          {recentCandidates.length === 0 && recentJobs.length === 0 ? (
+            <Card elevation={2} sx={{ mb: 4 }}>
+              <CardContent sx={{ py: 8, textAlign: 'center' }}>
+                <Box
+                  component="img"
+                  src="https://customer-assets.emergentagent.com/job_9ed72db7-5d32-4d00-a440-3eb81b39448c/artifacts/xn7kefv8_Top-10-Job-Portals-in-India-That-Makes-Them-Good-min.jpg"
+                  alt="Job Portal"
+                  sx={{
+                    width: '100%',
+                    maxWidth: 400,
+                    height: 'auto',
+                    mb: 3,
+                    borderRadius: 2,
+                  }}
                 />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Recent Jobs */}
-          <Grid item xs={12} md={6}>
-            <Card elevation={2}>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Recent Job Postings
+                <Typography variant="h4" gutterBottom color="primary.main">
+                  Welcome to Your Job Matching Platform!
                 </Typography>
-                {recentJobs.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <WorkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="body1" color="text.secondary">
-                      No job postings yet. Create your first job posting!
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box sx={{ mt: 2 }}>
-                    {recentJobs.map((job) => (
-                      <Card key={job.id} variant="outlined" sx={{ mb: 2 }}>
-                        <CardContent sx={{ py: 2 }}>
-                          <Typography variant="h6" sx={{ mb: 1 }}>
-                            {job.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            {job.company} • {job.location}
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {job.required_skills.slice(0, 3).map((skill) => (
-                              <Typography
-                                key={skill}
-                                variant="caption"
-                                sx={{
-                                  backgroundColor: 'success.light',
-                                  color: 'success.contrastText',
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 1,
-                                  fontSize: '0.7rem',
-                                }}
-                              >
-                                {skill}
-                              </Typography>
-                            ))}
-                            {job.required_skills.length > 3 && (
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  backgroundColor: 'grey.200',
-                                  color: 'text.secondary',
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 1,
-                                  fontSize: '0.7rem',
-                                }}
-                              >
-                                +{job.required_skills.length - 3} more
-                              </Typography>
-                            )}
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </Box>
-                )}
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
+                  Get started by creating job postings and having candidates upload their resumes. 
+                  Our AI-powered matching system will help you find the perfect candidates for your roles.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button 
+                    variant="contained" 
+                    size="large" 
+                    onClick={() => window.location.href = '/post-job'}
+                  >
+                    Create Your First Job
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="large"
+                    onClick={() => window.location.href = '/upload-resume'}
+                  >
+                    Upload Resume
+                  </Button>
+                </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          ) : (
+            <Grid container spacing={3}>
+              {/* Recent Candidates */}
+              <Grid item xs={12} md={6}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Typography variant="h5" gutterBottom>
+                      Recent Candidates
+                    </Typography>
+                    <CandidateList
+                      candidates={recentCandidates}
+                      title=""
+                      emptyMessage="No candidates yet. Start by having candidates upload resumes!"
+                      blindMode={false}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Recent Jobs */}
+              <Grid item xs={12} md={6}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Typography variant="h5" gutterBottom>
+                      Recent Job Postings
+                    </Typography>
+                    {recentJobs.length === 0 ? (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Box
+                          component="img"
+                          src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/toa0hkqk_medium_Top_IT_jobs_that_will_be_in_demand_in_the_future_ae76ae783e_363a0b1311.png"
+                          alt="IT Jobs in Demand"
+                          sx={{
+                            width: '100%',
+                            maxWidth: 200,
+                            height: 'auto',
+                            mb: 2,
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Typography variant="body1" color="text.secondary">
+                          No job postings yet. Create your first job posting!
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box sx={{ mt: 2 }}>
+                        {recentJobs.map((job) => (
+                          <Card key={job.id} variant="outlined" sx={{ mb: 2 }}>
+                            <CardContent sx={{ py: 2 }}>
+                              <Typography variant="h6" sx={{ mb: 1 }}>
+                                {job.title}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                {job.company} • {job.location}
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {job.required_skills.slice(0, 3).map((skill) => (
+                                  <Typography
+                                    key={skill}
+                                    variant="caption"
+                                    sx={{
+                                      backgroundColor: 'success.light',
+                                      color: 'success.contrastText',
+                                      px: 1,
+                                      py: 0.5,
+                                      borderRadius: 1,
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    {skill}
+                                  </Typography>
+                                ))}
+                                {job.required_skills.length > 3 && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      backgroundColor: 'grey.200',
+                                      color: 'text.secondary',
+                                      px: 1,
+                                      py: 0.5,
+                                      borderRadius: 1,
+                                      fontSize: '0.7rem',
+                                    }}
+                                  >
+                                    +{job.required_skills.length - 3} more
+                                  </Typography>
+                                )}
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          )}
+        </>
       )}
     </Container>
   );
