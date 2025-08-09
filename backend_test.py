@@ -160,7 +160,7 @@ class JobMatchingAPITester:
             "resume", 
             200, 
             data=resume_data_partial,
-            files={}
+            form_data=True
         )
         
         if success and 'candidate_id' in response:
