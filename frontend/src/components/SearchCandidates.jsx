@@ -273,17 +273,108 @@ const SearchCandidates = () => {
       )}
 
       {/* Results */}
-      <CandidateList
-        candidates={[]}
-        matchResults={results}
-        loading={searching}
-        error={null}
-        title={results.length > 0 ? `Top ${results.length} Matching Candidates ${blindScreening ? '(Blind Mode)' : ''}` : "Search Results"}
-        showScoreBreakdown={true}
-        emptyMessage="Select a job posting and click search to find matching candidates."
-        isSearchResults={true}
-        blindMode={blindScreening}
-      />
+      {isGuestUser() && results.length > 0 && results[0].isJobDisplay ? (
+        // Show job details for guest users
+        <Card elevation={3} sx={{ mb: 4 }}>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h4" gutterBottom color="primary.main">
+              📋 Job Details
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={8}>
+                <Typography variant="h5" gutterBottom>
+                  {results[0].job.title}
+                </Typography>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {results[0].job.company} • {results[0].job.location}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                  {results[0].job.description}
+                </Typography>
+                
+                <Typography variant="h6" gutterBottom>
+                  💰 Salary Range
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                  {results[0].job.salary || 'Competitive salary package'}
+                </Typography>
+                
+                <Typography variant="h6" gutterBottom>
+                  📅 Experience Required
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                  {results[0].job.min_experience_years} years minimum
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
+                  <Typography variant="h6" gutterBottom color="primary.main">
+                    🔐 Want to Apply?
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Create a full account to apply for jobs and upload your resume.
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    fullWidth 
+                    size="large"
+                    onClick={() => window.location.href = '/register'}
+                    sx={{ mb: 1 }}
+                  >
+                    Create Account
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth
+                    onClick={() => window.location.href = '/login'}
+                  >
+                    Login
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h6" gutterBottom>
+              🎯 Required Skills
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {results[0].job.required_skills.map((skill) => (
+                <Typography
+                  key={skill}
+                  variant="body2"
+                  sx={{
+                    backgroundColor: 'primary.light',
+                    color: 'primary.contrastText',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    fontWeight: 'medium',
+                  }}
+                >
+                  {skill}
+                </Typography>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+      ) : (
+        <CandidateList
+          candidates={[]}
+          matchResults={results.filter(r => !r.isJobDisplay)}
+          loading={searching}
+          error={null}
+          title={results.length > 0 ? `Top ${results.length} Matching Candidates ${blindScreening ? '(Blind Mode)' : ''}` : "Search Results"}
+          showScoreBreakdown={true}
+          emptyMessage={isGuestUser() ? "Select a job posting to view details." : "Select a job posting and click search to find matching candidates."}
+          isSearchResults={true}
+          blindMode={blindScreening}
+        />
+      )}
     </Container>
   );
 };
