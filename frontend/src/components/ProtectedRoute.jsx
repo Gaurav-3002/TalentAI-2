@@ -3,8 +3,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
-const ProtectedRoute = ({ children, requiredRoles = [], redirectTo = '/login' }) => {
-  const { isAuthenticated, loading, hasRole } = useAuth();
+const ProtectedRoute = ({ children, requiredRoles = [], allowGuest = false, redirectTo = '/login' }) => {
+  const { isAuthenticated, loading, hasRole, isGuestUser } = useAuth();
   const location = useLocation();
 
   if (loading) {
