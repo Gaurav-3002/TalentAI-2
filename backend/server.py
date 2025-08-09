@@ -304,6 +304,204 @@ def extract_text_from_docx(file_content: bytes) -> str:
         logger.error(f"DOCX extraction error: {e}")
         return ""
 
+# Authentication and User Management Routes
+
+@api_router.post("/auth/register", response_model=UserResponse)
+async def register_user(user_data: UserCreate):
+    """Register a new user"""
+    try:
+        # Check if user already exists
+        existing_user = await db.users.find_one({"email": user_data.email})
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+        
+        # Hash password and create user
+        hashed_password = get_password_hash(user_data.password)
+        verification_token = generate_verification_token()
+        
+        user = User(
+            email=user_data.email,
+            full_name=user_data.full_name,
+            role=user_data.role,
+            hashed_password=hashed_password,
+            verification_token=verification_token,
+            is_verified=True  # Auto-verify for demo purposes
+        )
+        
+        await db.users.insert_one(user.dict())
+        
+        return UserResponse(**user.dict())
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"User registration error: {e}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login_user(user_credentials: UserLogin):
+    """Authenticate user and return JWT token"""
+    try:
+        # Find user by email
+        user_doc = await db.users.find_one({"email": user_credentials.email})
+        if not user_doc:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        user = User(**user_doc)
+        
+        # Verify password
+        if not verify_password(user_credentials.password, user.hashed_password):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        if not user.is_active:
+            raise HTTPException(
+                status_code=401,
+                detail="Account is inactive"
+            )
+        
+        # Update last login
+        await db.users.update_one(
+            {"id": user.id},
+            {"$set": {"last_login": datetime.utcnow()}}
+        )
+        
+        # Create access token
+        access_token = create_access_token(
+            data={
+                "sub": user.id,
+                "email": user.email,
+                "role": user.role.value
+            }
+        )
+        
+        user_response = UserResponse(**user.dict())
+        user_response.last_login = datetime.utcnow()
+        
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user=user_response
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: TokenData = Depends(get_current_user)):
+    """Get current user information"""
+    try:
+        user_doc = await db.users.find_one({"id": current_user.user_id})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return UserResponse(**user_doc)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get user info error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get user info")
+
+@api_router.get("/users", response_model=List[UserResponse])
+async def get_all_users(current_user: TokenData = Depends(require_admin)):
+    """Get all users (admin only)"""
+    try:
+        users = await db.users.find().to_list(1000)
+        return [UserResponse(**user) for user in users]
+    except Exception as e:
+        logger.error(f"Get users error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get users")
+
+@api_router.put("/users/{user_id}/role")
+async def update_user_role(
+    user_id: str, 
+    new_role: UserRole,
+    current_user: TokenData = Depends(require_admin)
+):
+    """Update user role (admin only)"""
+    try:
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"role": new_role.value}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {"message": f"User role updated to {new_role}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update user role error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update user role")
+
+# Access Log Routes
+
+@api_router.get("/access-logs", response_model=List[AccessLog])
+async def get_access_logs(
+    limit: int = 100,
+    candidate_id: Optional[str] = None,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Get access logs (recruiter/admin only)"""
+    try:
+        filter_query = {}
+        if candidate_id:
+            filter_query["candidate_id"] = candidate_id
+        
+        # Non-admin users can only see their own access logs
+        if current_user.role != UserRole.ADMIN:
+            filter_query["user_id"] = current_user.user_id
+        
+        logs = await db.access_logs.find(filter_query).sort("timestamp", -1).limit(limit).to_list(limit)
+        return [AccessLog(**log) for log in logs]
+        
+    except Exception as e:
+        logger.error(f"Get access logs error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get access logs")
+
+@api_router.post("/access-logs", response_model=AccessLog)
+async def create_access_log(
+    log_data: AccessLogCreate,
+    request: Request,
+    current_user: TokenData = Depends(require_any_auth)
+):
+    """Create access log entry"""
+    try:
+        # Get candidate info
+        candidate_doc = await db.candidates.find_one({"id": log_data.candidate_id})
+        if not candidate_doc:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+        
+        candidate = Candidate(**candidate_doc)
+        
+        # Create access log
+        access_log = await log_candidate_access(
+            current_user, candidate, log_data.access_reason,
+            log_data.access_details, request
+        )
+        
+        return access_log
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Create access log error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create access log")
+
 # API Routes
 @api_router.get("/")
 async def root():
