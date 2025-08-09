@@ -106,7 +106,7 @@ class JobMatchingAPITester:
             "resume", 
             200, 
             data=resume_data,
-            files={}  # This will trigger form-data handling
+            form_data=True  # Use form data instead of files={}
         )
         
         if success and 'candidate_id' in response:
