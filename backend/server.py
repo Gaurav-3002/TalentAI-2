@@ -527,9 +527,10 @@ async def upload_resume(
     resume_text: Optional[str] = Form(None),
     skills: Optional[str] = Form(""),
     experience_years: Optional[int] = Form(0),
-    education: Optional[str] = Form("")
+    education: Optional[str] = Form(""),
+    current_user: TokenData = Depends(require_any_auth)
 ):
-    """Upload and process resume"""
+    """Upload and process resume (authenticated users only)"""
     try:
         extracted_text = ""
         
@@ -568,7 +569,8 @@ async def upload_resume(
             experience_years=final_experience,
             education=education,
             resume_text=final_text,
-            embedding=embedding
+            embedding=embedding,
+            created_by=current_user.user_id
         )
         
         # Store in database
