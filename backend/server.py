@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException, Form, Depends, Request
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Union
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 import re
 import json
@@ -22,6 +22,20 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 import asyncio
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+
+# Import our new auth and models
+from auth import (
+    get_current_user, require_admin, require_recruiter, require_any_auth,
+    get_password_hash, verify_password, create_access_token, 
+    generate_verification_token, TokenData, UserRole
+)
+from models import (
+    User, UserCreate, UserLogin, UserResponse, TokenResponse,
+    AccessLog, AccessLogCreate, AccessReason,
+    Candidate, CandidateCreate, CandidateResponse,
+    JobPosting, JobPostingCreate, MatchResult, SearchRequest,
+    StatusCheck, StatusCheckCreate
+)
 
 # File processing imports
 from docx import Document
