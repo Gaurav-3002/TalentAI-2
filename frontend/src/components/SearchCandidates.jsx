@@ -70,17 +70,29 @@ const SearchCandidates = () => {
     setResults([]);
     
     try {
-      const searchResults = await api.searchCandidates(selectedJob, k, blindScreening);
-      setResults(searchResults || []);
-      
-      // Log this search action
-      if (searchResults && searchResults.length > 0) {
+      if (isGuestUser()) {
+        // For guest users, show job details instead of candidate search
         const selectedJobData = jobs.find(job => job.id === selectedJob);
-        await api.createAccessLog(
-          searchResults[0].candidate_id,
-          'search',
-          `Search performed for ${selectedJobData?.title} with blind_screening=${blindScreening}`
-        );
+        if (selectedJobData) {
+          // Set a special result to show job details
+          setResults([{
+            isJobDisplay: true,
+            job: selectedJobData
+          }]);
+        }
+      } else {
+        const searchResults = await api.searchCandidates(selectedJob, k, blindScreening);
+        setResults(searchResults || []);
+        
+        // Log this search action
+        if (searchResults && searchResults.length > 0) {
+          const selectedJobData = jobs.find(job => job.id === selectedJob);
+          await api.createAccessLog(
+            searchResults[0].candidate_id,
+            'search',
+            `Search performed for ${selectedJobData?.title} with blind_screening=${blindScreening}`
+          );
+        }
       }
     } catch (error) {
       console.error('Error searching candidates:', error);
