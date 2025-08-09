@@ -85,6 +85,19 @@ const Navigation = () => {
               Dashboard
             </Button>
 
+            {/* Guest users get limited access */}
+            {isGuestUser() && (
+              <Button
+                color="inherit"
+                component={Link}
+                to="/search"
+                startIcon={<SearchIcon />}
+                sx={{ textTransform: 'none' }}
+              >
+                Browse Jobs
+              </Button>
+            )}
+
             {/* Candidate can upload resume */}
             {isCandidate() && (
               <Button
