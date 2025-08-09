@@ -581,15 +581,11 @@ class JobMatchingAPITester:
         # Test root endpoint
         success, _ = self.run_test("Root endpoint", "GET", "", 200)
         
-        # Test candidates endpoint (should work even if empty)
-        success, candidates = self.run_test("Get candidates", "GET", "candidates", 200)
-        if success:
-            print(f"   Found {len(candidates)} existing candidates")
+        # Test candidates endpoint (should require auth now)
+        success, candidates = self.run_test("Get candidates without auth (should fail)", "GET", "candidates", 401)
             
-        # Test jobs endpoint (should work even if empty)
-        success, jobs = self.run_test("Get jobs", "GET", "jobs", 200)
-        if success:
-            print(f"   Found {len(jobs)} existing jobs")
+        # Test jobs endpoint (should require auth now)
+        success, jobs = self.run_test("Get jobs without auth (should fail)", "GET", "jobs", 401)
 
     def test_resume_upload_text(self):
         """Test resume upload with text input"""
