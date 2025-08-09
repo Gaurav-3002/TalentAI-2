@@ -36,7 +36,7 @@ const Login = () => {
       [e.target.name]: e.target.value
     });
     // Clear error when user starts typing
-    if (error) setError('');
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e) => {
