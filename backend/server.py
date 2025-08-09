@@ -631,8 +631,14 @@ async def create_job_posting(
         raise HTTPException(status_code=500, detail=f"Job posting creation failed: {str(e)}")
 
 @api_router.get("/search", response_model=List[MatchResult])
-async def search_candidates(job_id: str, k: int = 10):
-    """Search and rank candidates for a job"""
+async def search_candidates(
+    request: Request,
+    job_id: str, 
+    k: int = 10,
+    blind_screening: bool = False,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Search and rank candidates for a job with optional blind screening"""
     try:
         # Get job posting
         job = await db.job_postings.find_one({"id": job_id})
@@ -654,6 +660,13 @@ async def search_candidates(job_id: str, k: int = 10):
         for candidate_data in candidates:
             candidate = Candidate(**candidate_data)
             
+            # Log access for each candidate viewed in search results
+            await log_candidate_access(
+                current_user, candidate, AccessReason.SEARCH,
+                f"Search for job: {job_obj.title} at {job_obj.company}, blind_mode={blind_screening}",
+                request
+            )
+            
             # Calculate semantic similarity
             semantic_score = calculate_similarity(candidate.embedding, job_obj.embedding)
             
@@ -673,23 +686,23 @@ async def search_candidates(job_id: str, k: int = 10):
                 experience_match * 0.2        # 20% experience match
             )
             
-            match_result = MatchResult(
-                candidate_id=candidate.id,
-                candidate_name=candidate.name,
-                candidate_email=candidate.email,
-                candidate_skills=candidate.skills,
-                candidate_experience_years=candidate.experience_years,
+            score_breakdown = {
+                "semantic_weight": 0.4,
+                "skill_overlap_weight": 0.4,
+                "experience_weight": 0.2,
+                "matched_skills": list(set(candidate.skills).intersection(set(job_obj.required_skills))),
+                "missing_skills": list(set(job_obj.required_skills) - set(candidate.skills))
+            }
+            
+            # Create match result with PII redaction support
+            match_result = MatchResult.from_candidate_and_scores(
+                candidate=candidate,
                 total_score=total_score,
                 semantic_score=semantic_score,
                 skill_overlap_score=skill_overlap,
                 experience_match_score=experience_match,
-                score_breakdown={
-                    "semantic_weight": 0.4,
-                    "skill_overlap_weight": 0.4,
-                    "experience_weight": 0.2,
-                    "matched_skills": list(set(candidate.skills).intersection(set(job_obj.required_skills))),
-                    "missing_skills": list(set(job_obj.required_skills) - set(candidate.skills))
-                }
+                score_breakdown=score_breakdown,
+                blind_mode=blind_screening
             )
             
             matches.append(match_result)
