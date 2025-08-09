@@ -12,6 +12,8 @@ class JobMatchingAPITester:
         self.tests_passed = 0
         self.created_candidates = []
         self.created_jobs = []
+        self.auth_tokens = {}  # Store tokens for different users
+        self.created_users = []  # Track created test users
 
     def run_test(self, name, method, endpoint, expected_status, data=None, files=None, form_data=False):
         """Run a single API test"""
