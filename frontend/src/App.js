@@ -629,7 +629,7 @@ function App() {
               <Route 
                 path="/dashboard" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowGuest={true}>
                     <Dashboard />
                   </ProtectedRoute>
                 } 
@@ -656,7 +656,7 @@ function App() {
               <Route 
                 path="/search" 
                 element={
-                  <ProtectedRoute requiredRoles={['admin', 'recruiter']}>
+                  <ProtectedRoute allowGuest={true}>
                     <SearchCandidates />
                   </ProtectedRoute>
                 } 
