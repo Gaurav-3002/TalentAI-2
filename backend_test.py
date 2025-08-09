@@ -75,6 +75,503 @@ class JobMatchingAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
 
+    def test_seeded_users(self):
+        """Test that default admin and recruiter accounts exist and can login"""
+        print("\n" + "="*50)
+        print("TESTING SEEDED USERS")
+        print("="*50)
+        
+        # Test admin login
+        admin_credentials = {
+            "email": "admin@jobmatcher.com",
+            "password": "admin123"
+        }
+        
+        success, response = self.run_test(
+            "Login with seeded admin account",
+            "POST",
+            "auth/login",
+            200,
+            data=admin_credentials
+        )
+        
+        if success and 'access_token' in response:
+            self.auth_tokens['admin'] = response['access_token']
+            print(f"   Admin user: {response['user']['full_name']} ({response['user']['role']})")
+        
+        # Test recruiter login
+        recruiter_credentials = {
+            "email": "recruiter@jobmatcher.com", 
+            "password": "recruiter123"
+        }
+        
+        success, response = self.run_test(
+            "Login with seeded recruiter account",
+            "POST", 
+            "auth/login",
+            200,
+            data=recruiter_credentials
+        )
+        
+        if success and 'access_token' in response:
+            self.auth_tokens['recruiter'] = response['access_token']
+            print(f"   Recruiter user: {response['user']['full_name']} ({response['user']['role']})")
+
+    def test_authentication_system(self):
+        """Test user registration, login, and JWT token validation"""
+        print("\n" + "="*50)
+        print("TESTING AUTHENTICATION SYSTEM")
+        print("="*50)
+        
+        # Test user registration
+        test_user_data = {
+            "email": "testuser@example.com",
+            "full_name": "Test User",
+            "password": "testpass123",
+            "role": "candidate"
+        }
+        
+        success, response = self.run_test(
+            "User registration",
+            "POST",
+            "auth/register", 
+            200,
+            data=test_user_data
+        )
+        
+        if success:
+            self.created_users.append(response['id'])
+            print(f"   Registered user: {response['full_name']} ({response['role']})")
+        
+        # Test duplicate registration (should fail)
+        success, _ = self.run_test(
+            "Duplicate user registration",
+            "POST",
+            "auth/register",
+            400,  # Should fail with 400
+            data=test_user_data
+        )
+        
+        # Test user login
+        login_data = {
+            "email": "testuser@example.com",
+            "password": "testpass123"
+        }
+        
+        success, response = self.run_test(
+            "User login",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and 'access_token' in response:
+            self.auth_tokens['candidate'] = response['access_token']
+            print(f"   Login successful, token received")
+            print(f"   User: {response['user']['full_name']} ({response['user']['role']})")
+        
+        # Test invalid login
+        invalid_login = {
+            "email": "testuser@example.com",
+            "password": "wrongpassword"
+        }
+        
+        success, _ = self.run_test(
+            "Invalid login attempt",
+            "POST",
+            "auth/login",
+            401,  # Should fail with 401
+            data=invalid_login
+        )
+
+    def test_jwt_token_validation(self):
+        """Test JWT token validation and current user endpoint"""
+        print("\n" + "="*50)
+        print("TESTING JWT TOKEN VALIDATION")
+        print("="*50)
+        
+        # Test /auth/me with valid token
+        if 'candidate' in self.auth_tokens:
+            success, response = self.run_test(
+                "Get current user info (valid token)",
+                "GET",
+                "auth/me",
+                200,
+                auth_token=self.auth_tokens['candidate']
+            )
+            
+            if success:
+                print(f"   Current user: {response.get('full_name')} ({response.get('role')})")
+        
+        # Test /auth/me without token (should fail)
+        success, _ = self.run_test(
+            "Get current user info (no token)",
+            "GET", 
+            "auth/me",
+            401  # Should fail with 401
+        )
+        
+        # Test /auth/me with invalid token (should fail)
+        success, _ = self.run_test(
+            "Get current user info (invalid token)",
+            "GET",
+            "auth/me", 
+            401,  # Should fail with 401
+            auth_token="invalid-token-12345"
+        )
+
+    def test_role_based_access_control(self):
+        """Test role-based access control for different endpoints"""
+        print("\n" + "="*50)
+        print("TESTING ROLE-BASED ACCESS CONTROL")
+        print("="*50)
+        
+        # Test admin-only endpoint: get all users
+        if 'admin' in self.auth_tokens:
+            success, response = self.run_test(
+                "Get all users (admin access)",
+                "GET",
+                "users",
+                200,
+                auth_token=self.auth_tokens['admin']
+            )
+            
+            if success:
+                print(f"   Admin can access users list: {len(response)} users found")
+        
+        # Test recruiter trying to access admin-only endpoint (should fail)
+        if 'recruiter' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Get all users (recruiter access - should fail)",
+                "GET",
+                "users",
+                403,  # Should fail with 403
+                auth_token=self.auth_tokens['recruiter']
+            )
+        
+        # Test candidate trying to access admin-only endpoint (should fail)
+        if 'candidate' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Get all users (candidate access - should fail)",
+                "GET",
+                "users",
+                403,  # Should fail with 403
+                auth_token=self.auth_tokens['candidate']
+            )
+        
+        # Test role update (admin only)
+        if 'admin' in self.auth_tokens and self.created_users:
+            user_id = self.created_users[0]
+            success, response = self.run_test(
+                "Update user role (admin access)",
+                "PUT",
+                f"users/{user_id}/role",
+                200,
+                data="recruiter",  # New role
+                auth_token=self.auth_tokens['admin']
+            )
+
+    def test_protected_endpoints(self):
+        """Test that protected endpoints require proper authentication and roles"""
+        print("\n" + "="*50)
+        print("TESTING PROTECTED ENDPOINTS")
+        print("="*50)
+        
+        # Test resume upload without authentication (should fail)
+        resume_data = {
+            'name': 'Test User',
+            'email': 'test@example.com',
+            'resume_text': 'Test resume content',
+        }
+        
+        success, _ = self.run_test(
+            "Resume upload without auth (should fail)",
+            "POST",
+            "resume",
+            401,  # Should fail with 401
+            data=resume_data,
+            form_data=True
+        )
+        
+        # Test job creation without authentication (should fail)
+        job_data = {
+            'title': 'Test Job',
+            'company': 'Test Company',
+            'required_skills': ['Python'],
+            'description': 'Test job description'
+        }
+        
+        success, _ = self.run_test(
+            "Job creation without auth (should fail)",
+            "POST",
+            "job",
+            401,  # Should fail with 401
+            data=job_data
+        )
+        
+        # Test candidate search without authentication (should fail)
+        success, _ = self.run_test(
+            "Candidate search without auth (should fail)",
+            "GET",
+            "search?job_id=test-id&k=10",
+            401  # Should fail with 401
+        )
+        
+        # Test job creation with candidate role (should fail)
+        if 'candidate' in self.auth_tokens:
+            success, _ = self.run_test(
+                "Job creation with candidate role (should fail)",
+                "POST",
+                "job",
+                403,  # Should fail with 403 (forbidden)
+                data=job_data,
+                auth_token=self.auth_tokens['candidate']
+            )
+
+    def test_resume_upload_authenticated(self):
+        """Test resume upload with proper authentication"""
+        print("\n" + "="*50)
+        print("TESTING AUTHENTICATED RESUME UPLOAD")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping authenticated resume tests")
+            return
+        
+        # Test case 1: High-skill candidate (Alice Johnson equivalent)
+        resume_data = {
+            'name': 'Alice Johnson',
+            'email': 'alice.johnson@example.com',
+            'resume_text': '''
+            Senior Full Stack Developer with 8 years of experience in JavaScript, React, Node.js, Python, 
+            MongoDB, AWS, Docker, and machine learning. Expert in building scalable web applications.
+            Education: Master's in Computer Science from Stanford University.
+            ''',
+            'skills': 'JavaScript, React, Node.js, Python, MongoDB, AWS, Docker, Machine Learning',
+            'experience_years': 8,
+            'education': "Master's in Computer Science"
+        }
+        
+        success, response = self.run_test(
+            "Upload high-skill resume (authenticated)", 
+            "POST", 
+            "resume", 
+            200, 
+            data=resume_data,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'candidate_id' in response:
+            self.created_candidates.append(response['candidate_id'])
+            print(f"   Extracted skills: {response.get('extracted_skills', [])}")
+            print(f"   Experience years: {response.get('experience_years', 0)}")
+
+    def test_job_posting_authenticated(self):
+        """Test job posting creation with proper authentication"""
+        print("\n" + "="*50)
+        print("TESTING AUTHENTICATED JOB POSTING")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping authenticated job tests")
+            return
+        
+        # Test case 1: Senior Full Stack Developer job
+        job_data = {
+            'title': 'Senior Full Stack Developer',
+            'company': 'Tech Innovations Inc',
+            'required_skills': ['JavaScript', 'React', 'Node.js', 'Python', 'MongoDB', 'AWS'],
+            'location': 'San Francisco, CA',
+            'salary': '$120,000 - $160,000',
+            'description': '''
+            We are looking for a Senior Full Stack Developer with expertise in modern web technologies.
+            The ideal candidate should have experience with JavaScript, React, Node.js, Python, MongoDB, and AWS.
+            Minimum 5 years of experience required.
+            ''',
+            'min_experience_years': 5
+        }
+        
+        success, response = self.run_test(
+            "Create senior developer job (authenticated)", 
+            "POST", 
+            "job", 
+            200, 
+            data=job_data,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'id' in response:
+            self.created_jobs.append(response['id'])
+            print(f"   Required skills: {response.get('required_skills', [])}")
+            print(f"   Min experience: {response.get('min_experience_years', 0)} years")
+
+    def test_access_logging(self):
+        """Test access logging functionality"""
+        print("\n" + "="*50)
+        print("TESTING ACCESS LOGGING")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping access logging tests")
+            return
+        
+        # Test candidate search (should create access logs)
+        if self.created_jobs:
+            job_id = self.created_jobs[0]
+            success, results = self.run_test(
+                "Candidate search (creates access logs)",
+                "GET",
+                f"search?job_id={job_id}&k=5",
+                200,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   Search completed, should have created access logs for {len(results)} candidates")
+        
+        # Test viewing specific candidate (should create access log)
+        if self.created_candidates:
+            candidate_id = self.created_candidates[0]
+            success, response = self.run_test(
+                "View candidate profile (creates access log)",
+                "GET",
+                f"candidates/{candidate_id}",
+                200,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   Viewed candidate: {response.get('name')}")
+        
+        # Test retrieving access logs
+        success, logs = self.run_test(
+            "Get access logs",
+            "GET",
+            "access-logs?limit=10",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   Retrieved {len(logs)} access log entries")
+            if logs:
+                latest_log = logs[0]
+                print(f"   Latest log: {latest_log.get('access_reason')} - {latest_log.get('candidate_name')}")
+        
+        # Test creating manual access log
+        if self.created_candidates:
+            log_data = {
+                "candidate_id": self.created_candidates[0],
+                "access_reason": "evaluation",
+                "access_details": "Manual evaluation for position"
+            }
+            
+            success, response = self.run_test(
+                "Create manual access log",
+                "POST",
+                "access-logs",
+                200,
+                data=log_data,
+                auth_token=self.auth_tokens['recruiter']
+            )
+
+    def test_pii_redaction_blind_screening(self):
+        """Test PII redaction and blind screening functionality"""
+        print("\n" + "="*50)
+        print("TESTING PII REDACTION & BLIND SCREENING")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping PII redaction tests")
+            return
+        
+        # Test candidate search with blind screening
+        if self.created_jobs:
+            job_id = self.created_jobs[0]
+            success, results = self.run_test(
+                "Candidate search with blind screening",
+                "GET",
+                f"search?job_id={job_id}&k=5&blind_screening=true",
+                200,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success and results:
+                print(f"   Blind search returned {len(results)} candidates")
+                for i, result in enumerate(results[:2]):
+                    print(f"   Candidate {i+1}: {result['candidate_name']} | {result['candidate_email']}")
+                    # Check if PII is redacted (should contain *** or be shortened)
+                    if '***' in result['candidate_name'] or '***' in result['candidate_email']:
+                        print(f"   ✅ PII properly redacted")
+                    else:
+                        print(f"   ⚠️  PII may not be redacted")
+        
+        # Test candidate viewing with blind mode
+        if self.created_candidates:
+            candidate_id = self.created_candidates[0]
+            success, response = self.run_test(
+                "View candidate with blind mode",
+                "GET",
+                f"candidates/{candidate_id}?blind_mode=true",
+                200,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   Blind mode candidate: {response.get('name')} | {response.get('email')}")
+                if '***' in response.get('name', '') or '***' in response.get('email', ''):
+                    print(f"   ✅ PII properly redacted in blind mode")
+                else:
+                    print(f"   ⚠️  PII may not be redacted in blind mode")
+        
+        # Test regular candidate list with blind mode
+        success, candidates = self.run_test(
+            "Get candidates list with blind mode",
+            "GET",
+            "candidates?blind_mode=true",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and candidates:
+            print(f"   Retrieved {len(candidates)} candidates in blind mode")
+
+    def test_user_management(self):
+        """Test user management endpoints"""
+        print("\n" + "="*50)
+        print("TESTING USER MANAGEMENT")
+        print("="*50)
+        
+        # Test getting current user info
+        if 'admin' in self.auth_tokens:
+            success, response = self.run_test(
+                "Get current user info (admin)",
+                "GET",
+                "auth/me",
+                200,
+                auth_token=self.auth_tokens['admin']
+            )
+            
+            if success:
+                print(f"   Admin user info: {response.get('full_name')} ({response.get('role')})")
+        
+        # Test getting all users (admin only)
+        if 'admin' in self.auth_tokens:
+            success, users = self.run_test(
+                "Get all users (admin only)",
+                "GET",
+                "users",
+                200,
+                auth_token=self.auth_tokens['admin']
+            )
+            
+            if success:
+                print(f"   Found {len(users)} total users in system")
+                for user in users[:3]:  # Show first 3 users
+                    print(f"   User: {user.get('full_name')} ({user.get('role')}) - {user.get('email')}")
+
     def test_basic_endpoints(self):
         """Test basic API endpoints"""
         print("\n" + "="*50)
