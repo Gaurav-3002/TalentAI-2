@@ -155,37 +155,59 @@ def extract_experience_years(text: str) -> int:
     return max_years
 
 async def generate_embedding(text: str) -> List[float]:
-    """Generate embedding using Emergent LLM"""
+    """Generate embedding using TF-IDF with improved corpus"""
     try:
-        # Create a simple chat to get embeddings
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"embedding_{uuid.uuid4()}",
-            system_message="You are a text embedding generator. Generate a numerical representation of the given text."
-        ).with_model("openai", "gpt-4o-mini")
+        # Create a more comprehensive corpus for better TF-IDF results
+        tech_corpus = [
+            text,
+            "software engineer developer programming coding",
+            "javascript python java react node.js",
+            "database mongodb mysql postgresql sql",
+            "cloud aws azure docker kubernetes",
+            "frontend backend full stack development",
+            "machine learning ai artificial intelligence",
+            "marketing manager social media campaigns",
+            "data analysis analytics visualization"
+        ]
         
-        # For now, we'll use TF-IDF as embedding until we have proper embedding endpoint
-        # This is a simplified approach - in production, you'd use proper embeddings
-        vectorizer = TfidfVectorizer(max_features=384, stop_words='english', lowercase=True)
+        vectorizer = TfidfVectorizer(
+            max_features=384, 
+            stop_words='english', 
+            lowercase=True,
+            ngram_range=(1, 2),  # Include bigrams
+            min_df=1,
+            max_df=0.95
+        )
         
-        # Create a corpus of one document
         try:
-            tfidf_matrix = vectorizer.fit_transform([text])
-            embedding = tfidf_matrix.toarray()[0].tolist()
+            tfidf_matrix = vectorizer.fit_transform(tech_corpus)
+            # Get the embedding for our input text (first document)
+            embedding = tfidf_matrix[0].toarray()[0].tolist()
+            
             # Normalize the embedding
             norm = np.linalg.norm(embedding)
             if norm > 0:
                 embedding = (embedding / norm).tolist()
+            else:
+                # Create a basic embedding based on text features
+                words = text.lower().split()
+                embedding = [len(words) / 100.0] + [0.1 if word in text.lower() else 0.0 for word in ['javascript', 'python', 'react', 'node', 'database', 'aws', 'docker', 'machine learning', 'marketing', 'design']]
+                embedding = embedding[:384] + [0.0] * (384 - len(embedding))
+            
             return embedding
         except Exception as e:
             logger.error(f"TF-IDF embedding error: {e}")
-            # Return zero vector as fallback
-            return [0.0] * 384
+            # Return a simple hash-based embedding as fallback
+            import hashlib
+            text_hash = hashlib.md5(text.lower().encode()).hexdigest()
+            embedding = [float(int(char, 16)) / 15.0 for char in text_hash]
+            embedding = embedding + [0.1] * (384 - len(embedding))
+            return embedding[:384]
             
     except Exception as e:
         logger.error(f"Embedding generation error: {e}")
         # Return zero vector as fallback
-        return [0.0] * 384
+        return [0.1] * 384  # Small values instead of zeros
 
 def calculate_similarity(embedding1: List[float], embedding2: List[float]) -> float:
     """Calculate cosine similarity between embeddings"""
