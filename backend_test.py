@@ -15,14 +15,20 @@ class JobMatchingAPITester:
         self.auth_tokens = {}  # Store tokens for different users
         self.created_users = []  # Track created test users
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, files=None, form_data=False):
-        """Run a single API test"""
+    def run_test(self, name, method, endpoint, expected_status, data=None, files=None, form_data=False, auth_token=None):
+        """Run a single API test with optional authentication"""
         url = f"{self.api_url}/{endpoint}"
         headers = {}
+        
+        # Add authentication header if token provided
+        if auth_token:
+            headers['Authorization'] = f'Bearer {auth_token}'
         
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
         print(f"   URL: {url}")
+        if auth_token:
+            print(f"   Auth: Bearer token provided")
         
         try:
             if method == 'GET':
@@ -30,12 +36,18 @@ class JobMatchingAPITester:
             elif method == 'POST':
                 if files or form_data:
                     # Send as form data (multipart/form-data)
-                    response = requests.post(url, data=data, files=files)
+                    response = requests.post(url, data=data, files=files, headers=headers)
                 elif data:
                     headers['Content-Type'] = 'application/json'
                     response = requests.post(url, json=data, headers=headers)
                 else:
                     response = requests.post(url, headers=headers)
+            elif method == 'PUT':
+                if data:
+                    headers['Content-Type'] = 'application/json'
+                    response = requests.put(url, json=data, headers=headers)
+                else:
+                    response = requests.put(url, headers=headers)
 
             success = response.status_code == expected_status
             if success:
