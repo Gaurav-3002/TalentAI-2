@@ -802,19 +802,24 @@ class JobMatchingAPITester:
                 print(f"   Found {len(results)} matching candidates for junior role")
 
     def test_individual_endpoints(self):
-        """Test individual candidate and job retrieval"""
+        """Test individual candidate and job retrieval with authentication"""
         print("\n" + "="*50)
-        print("TESTING INDIVIDUAL ENDPOINTS")
+        print("TESTING INDIVIDUAL ENDPOINTS (AUTHENTICATED)")
         print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping individual endpoint tests")
+            return
         
         # Test individual candidate retrieval
         if self.created_candidates:
             candidate_id = self.created_candidates[0]
             success, candidate = self.run_test(
-                "Get individual candidate", 
+                "Get individual candidate (authenticated)", 
                 "GET", 
                 f"candidates/{candidate_id}", 
-                200
+                200,
+                auth_token=self.auth_tokens['recruiter']
             )
             
             if success:
@@ -824,14 +829,39 @@ class JobMatchingAPITester:
         if self.created_jobs:
             job_id = self.created_jobs[0]
             success, job = self.run_test(
-                "Get individual job", 
+                "Get individual job (authenticated)", 
                 "GET", 
                 f"jobs/{job_id}", 
-                200
+                200,
+                auth_token=self.auth_tokens['recruiter']
             )
             
             if success:
                 print(f"   Retrieved: {job.get('title', 'Unknown')}")
+        
+        # Test candidates list endpoint
+        success, candidates = self.run_test(
+            "Get all candidates (authenticated)",
+            "GET",
+            "candidates",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   Retrieved {len(candidates)} candidates from list endpoint")
+        
+        # Test jobs list endpoint  
+        success, jobs = self.run_test(
+            "Get all jobs (authenticated)",
+            "GET",
+            "jobs",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   Retrieved {len(jobs)} jobs from list endpoint")
 
     def test_error_cases(self):
         """Test error handling"""
