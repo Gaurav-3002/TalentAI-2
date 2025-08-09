@@ -810,7 +810,40 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     await create_indexes()
+    await seed_initial_users()
     logger.info("Job Matching API started successfully")
+
+async def seed_initial_users():
+    """Create initial admin and recruiter users"""
+    try:
+        # Check if admin already exists
+        admin_exists = await db.users.find_one({"email": "admin@jobmatcher.com"})
+        if not admin_exists:
+            admin_user = User(
+                email="admin@jobmatcher.com",
+                full_name="System Administrator",
+                role=UserRole.ADMIN,
+                hashed_password=get_password_hash("admin123"),
+                is_verified=True
+            )
+            await db.users.insert_one(admin_user.dict())
+            logger.info("Created default admin user: admin@jobmatcher.com / admin123")
+        
+        # Check if recruiter already exists
+        recruiter_exists = await db.users.find_one({"email": "recruiter@jobmatcher.com"})
+        if not recruiter_exists:
+            recruiter_user = User(
+                email="recruiter@jobmatcher.com",
+                full_name="Default Recruiter",
+                role=UserRole.RECRUITER,
+                hashed_password=get_password_hash("recruiter123"),
+                is_verified=True
+            )
+            await db.users.insert_one(recruiter_user.dict())
+            logger.info("Created default recruiter user: recruiter@jobmatcher.com / recruiter123")
+            
+    except Exception as e:
+        logger.error(f"Error seeding initial users: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
