@@ -50,6 +50,7 @@ const Navigation = () => {
       case 'admin': return 'error';
       case 'recruiter': return 'warning';
       case 'candidate': return 'success';
+      case 'guest': return 'info';
       default: return 'default';
     }
   };
