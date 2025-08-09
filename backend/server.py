@@ -717,33 +717,77 @@ async def search_candidates(
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 # Get endpoints for data
-@api_router.get("/candidates", response_model=List[Candidate])
-async def get_candidates():
-    """Get all candidates"""
-    candidates = await db.candidates.find().to_list(1000)
-    return [Candidate(**candidate) for candidate in candidates]
+@api_router.get("/candidates", response_model=List[CandidateResponse])
+async def get_candidates(
+    blind_mode: bool = False,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Get all candidates with optional PII redaction"""
+    try:
+        candidates = await db.candidates.find().to_list(1000)
+        return [
+            CandidateResponse.from_candidate(Candidate(**candidate), blind_mode=blind_mode)
+            for candidate in candidates
+        ]
+    except Exception as e:
+        logger.error(f"Get candidates error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get candidates")
 
 @api_router.get("/jobs", response_model=List[JobPosting])
-async def get_job_postings():
-    """Get all job postings"""
-    jobs = await db.job_postings.find().to_list(1000)
-    return [JobPosting(**job) for job in jobs]
+async def get_job_postings(current_user: TokenData = Depends(require_any_auth)):
+    """Get all job postings (authenticated users only)"""
+    try:
+        jobs = await db.job_postings.find().to_list(1000)
+        return [JobPosting(**job) for job in jobs]
+    except Exception as e:
+        logger.error(f"Get jobs error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get jobs")
 
-@api_router.get("/candidates/{candidate_id}", response_model=Candidate)
-async def get_candidate(candidate_id: str):
-    """Get a specific candidate"""
-    candidate = await db.candidates.find_one({"id": candidate_id})
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
-    return Candidate(**candidate)
+@api_router.get("/candidates/{candidate_id}", response_model=CandidateResponse)
+async def get_candidate(
+    candidate_id: str,
+    request: Request,
+    blind_mode: bool = False,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Get a specific candidate with access logging and optional PII redaction"""
+    try:
+        candidate = await db.candidates.find_one({"id": candidate_id})
+        if not candidate:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+        
+        candidate_obj = Candidate(**candidate)
+        
+        # Log access to this candidate's profile
+        await log_candidate_access(
+            current_user, candidate_obj, AccessReason.VIEW_PROFILE,
+            f"Viewed candidate profile, blind_mode={blind_mode}", request
+        )
+        
+        return CandidateResponse.from_candidate(candidate_obj, blind_mode=blind_mode)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get candidate error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get candidate")
 
 @api_router.get("/jobs/{job_id}", response_model=JobPosting)
-async def get_job_posting(job_id: str):
+async def get_job_posting(
+    job_id: str,
+    current_user: TokenData = Depends(require_any_auth)
+):
     """Get a specific job posting"""
-    job = await db.job_postings.find_one({"id": job_id})
-    if not job:
-        raise HTTPException(status_code=404, detail="Job posting not found")
-    return JobPosting(**job)
+    try:
+        job = await db.job_postings.find_one({"id": job_id})
+        if not job:
+            raise HTTPException(status_code=404, detail="Job posting not found")
+        return JobPosting(**job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get job error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get job")
 
 # Include the router in the main app
 app.include_router(api_router)
