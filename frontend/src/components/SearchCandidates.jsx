@@ -122,62 +122,93 @@ const SearchCandidates = () => {
       </Typography>
       
       {/* Search Form */}
-      <Card elevation={3} sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Grid container spacing={3} alignItems="end">
-            <Grid item xs={12} md={5}>
-              <FormControl fullWidth>
-                <InputLabel>Select Job Posting</InputLabel>
-                <Select
-                  value={selectedJob}
-                  onChange={(e) => setSelectedJob(e.target.value)}
-                  label="Select Job Posting"
-                >
-                  <MenuItem value="">Choose a job posting...</MenuItem>
-                  {jobs.map((job) => (
-                    <MenuItem key={job.id} value={job.id}>
-                      {job.title} - {job.company}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={2}>
-              <TextField
-                fullWidth
-                label="Results"
-                type="number"
-                value={k}
-                onChange={(e) => setK(parseInt(e.target.value) || 10)}
-                inputProps={{ min: 1, max: 50 }}
-                variant="outlined"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={3}>
-              <Tooltip title={blindScreening ? "Blind screening enabled - candidate names and emails will be masked" : "Blind screening disabled - full candidate information visible"}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={blindScreening}
-                      onChange={(e) => setBlindScreening(e.target.checked)}
-                      icon={<VisibleIcon />}
-                      checkedIcon={<BlindIcon />}
-                    />
-                  }
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {blindScreening ? <BlindIcon /> : <VisibleIcon />}
-                      Blind Screening
-                    </Box>
-                  }
+      {jobs.length === 0 ? (
+        <Card elevation={3} sx={{ mb: 4 }}>
+          <CardContent sx={{ p: 6, textAlign: 'center' }}>
+            <Box
+              component="img"
+              src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/ax6ta69e_11072023_230143_Job-Portal-App-Development.png"
+              alt="Job Portal Development"
+              sx={{
+                width: '100%',
+                maxWidth: 300,
+                height: 'auto',
+                mb: 3,
+                borderRadius: 2,
+              }}
+            />
+            <Typography variant="h5" gutterBottom color="primary.main">
+              No Job Postings Available
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+              There are no job postings created yet. Create a job posting first to search for matching candidates.
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large" 
+              onClick={() => window.location.href = '/post-job'}
+            >
+              Create Job Posting
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card elevation={3} sx={{ mb: 4 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Grid container spacing={3} alignItems="end">
+              <Grid item xs={12} md={5}>
+                <FormControl fullWidth>
+                  <InputLabel>Select Job Posting</InputLabel>
+                  <Select
+                    value={selectedJob}
+                    onChange={(e) => setSelectedJob(e.target.value)}
+                    label="Select Job Posting"
+                  >
+                    <MenuItem value="">Choose a job posting...</MenuItem>
+                    {jobs.map((job) => (
+                      <MenuItem key={job.id} value={job.id}>
+                        {job.title} - {job.company}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} md={2}>
+                <TextField
+                  fullWidth
+                  label="Results"
+                  type="number"
+                  value={k}
+                  onChange={(e) => setK(parseInt(e.target.value) || 10)}
+                  inputProps={{ min: 1, max: 50 }}
+                  variant="outlined"
                 />
-              </Tooltip>
-            </Grid>
-            
-            <Grid item xs={12} md={2}>
-              <Button
+              </Grid>
+              
+              <Grid item xs={12} md={3}>
+                <Tooltip title={blindScreening ? "Blind screening enabled - candidate names and emails will be masked" : "Blind screening disabled - full candidate information visible"}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={blindScreening}
+                        onChange={(e) => setBlindScreening(e.target.checked)}
+                        icon={<VisibleIcon />}
+                        checkedIcon={<BlindIcon />}
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {blindScreening ? <BlindIcon /> : <VisibleIcon />}
+                        Blind Screening
+                      </Box>
+                    }
+                  />
+                </Tooltip>
+              </Grid>
+              
+              <Grid item xs={12} md={2}>
+                <Button
                 variant="contained"
                 size="large"
                 fullWidth
