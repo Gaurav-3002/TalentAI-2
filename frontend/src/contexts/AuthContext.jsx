@@ -16,13 +16,27 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   // Initialize auth state from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('user_data');
+    const storedGuest = localStorage.getItem('guest_mode');
     
-    if (storedToken && storedUser) {
+    if (storedGuest === 'true') {
+      // Guest mode
+      setIsGuest(true);
+      setIsAuthenticated(true);
+      setUser({
+        id: 'guest',
+        email: 'guest@demo.com',
+        full_name: 'Guest User',
+        role: 'guest',
+        is_active: true,
+        is_verified: false
+      });
+    } else if (storedToken && storedUser) {
       try {
         const userData = JSON.parse(storedUser);
         setToken(storedToken);
