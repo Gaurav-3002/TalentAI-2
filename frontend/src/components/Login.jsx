@@ -22,7 +22,7 @@ const Login = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const { login, loginAsGuest } = useAuth();
   const navigate = useNavigate();
