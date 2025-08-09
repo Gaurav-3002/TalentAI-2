@@ -1,29 +1,104 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import {
+  ThemeProvider,
+  CssBaseline,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  CircularProgress,
+  Alert,
+  TextField,
+  FormData as FormDataClass,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Upload as UploadIcon,
+  Work as WorkIcon,
+  Search as SearchIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Import components and services
+import theme from './utils/theme';
+import api from './services/api';
+import JobForm from './components/JobForm';
+import CandidateList from './components/CandidateList';
+import ValidationQuiz from './components/ValidationQuiz';
 
-// Navigation Component
+// Navigation Component with Material UI
 const Navigation = () => {
   return (
-    <nav className="bg-gray-900 text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold">Job Matcher</Link>
-        <div className="space-x-4">
-          <Link to="/" className="hover:text-blue-300 transition-colors">Dashboard</Link>
-          <Link to="/upload-resume" className="hover:text-blue-300 transition-colors">Upload Resume</Link>
-          <Link to="/post-job" className="hover:text-blue-300 transition-colors">Post Job</Link>
-          <Link to="/search" className="hover:text-blue-300 transition-colors">Search</Link>
-        </div>
-      </div>
-    </nav>
+    <AppBar position="static" elevation={2}>
+      <Toolbar>
+        <Typography
+          variant="h6"
+          component={Link}
+          to="/"
+          sx={{
+            flexGrow: 1,
+            textDecoration: 'none',
+            color: 'inherit',
+            fontWeight: 'bold'
+          }}
+        >
+          🎯 Job Matcher
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/"
+            startIcon={<DashboardIcon />}
+            sx={{ textTransform: 'none' }}
+          >
+            Dashboard
+          </Button>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/upload-resume"
+            startIcon={<UploadIcon />}
+            sx={{ textTransform: 'none' }}
+          >
+            Upload Resume
+          </Button>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/post-job"
+            startIcon={<WorkIcon />}
+            sx={{ textTransform: 'none' }}
+          >
+            Post Job
+          </Button>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/search"
+            startIcon={<SearchIcon />}
+            sx={{ textTransform: 'none' }}
+          >
+            Search
+          </Button>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 
-// Dashboard Component
+// Dashboard Component with Material UI
 const Dashboard = () => {
   const [stats, setStats] = useState({
     candidatesCount: 0,
@@ -39,17 +114,10 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [candidatesRes, jobsRes] = await Promise.all([
-        axios.get(`${API}/candidates`),
-        axios.get(`${API}/jobs`)
-      ]);
-      
-      setRecentCandidates(candidatesRes.data.slice(0, 5));
-      setRecentJobs(jobsRes.data.slice(0, 5));
-      setStats({
-        candidatesCount: candidatesRes.data.length,
-        jobsCount: jobsRes.data.length
-      });
+      const data = await api.getDashboardData();
+      setRecentCandidates(data.candidates.slice(0, 5));
+      setRecentJobs(data.jobs.slice(0, 5));
+      setStats(data.stats);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -59,116 +127,170 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Loading dashboard...
+        </Typography>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">Job Matching Dashboard</h1>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+        Job Matching Dashboard
+      </Typography>
+      
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    p: 2,
+                    borderRadius: 2,
+                    mr: 3,
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: 32 }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" color="text.secondary">
+                    Total Candidates
+                  </Typography>
+                  <Typography variant="h3" color="primary.main" fontWeight="bold">
+                    {stats.candidatesCount}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
         
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="bg-blue-500 text-white p-3 rounded-full">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-700">Total Candidates</h3>
-                <p className="text-3xl font-bold text-blue-600">{stats.candidatesCount}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="bg-green-500 text-white p-3 rounded-full">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2h8a2 2 0 012 2z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-700">Total Jobs</h3>
-                <p className="text-3xl font-bold text-green-600">{stats.jobsCount}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    backgroundColor: 'success.main',
+                    color: 'success.contrastText',
+                    p: 2,
+                    borderRadius: 2,
+                    mr: 3,
+                  }}
+                >
+                  <WorkIcon sx={{ fontSize: 32 }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" color="text.secondary">
+                    Total Jobs
+                  </Typography>
+                  <Typography variant="h3" color="success.main" fontWeight="bold">
+                    {stats.jobsCount}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-        {/* Recent Data */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Recent Candidates */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">Recent Candidates</h3>
-            {recentCandidates.length === 0 ? (
-              <p className="text-gray-500">No candidates yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {recentCandidates.map((candidate) => (
-                  <div key={candidate.id} className="border-b pb-2">
-                    <p className="font-medium">{candidate.name}</p>
-                    <p className="text-sm text-gray-600">{candidate.email}</p>
-                    <p className="text-sm text-blue-600">{candidate.experience_years} years experience</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {candidate.skills.slice(0, 3).map((skill) => (
-                        <span key={skill} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                          {skill}
-                        </span>
-                      ))}
-                      {candidate.skills.length > 3 && (
-                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                          +{candidate.skills.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* Recent Data */}
+      <Grid container spacing={3}>
+        {/* Recent Candidates */}
+        <Grid item xs={12} md={6}>
+          <Card elevation={2}>
+            <CardContent>
+              <Typography variant="h5" gutterBottom>
+                Recent Candidates
+              </Typography>
+              <CandidateList
+                candidates={recentCandidates}
+                title=""
+                emptyMessage="No candidates yet. Start by uploading some resumes!"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
-          {/* Recent Jobs */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">Recent Job Postings</h3>
-            {recentJobs.length === 0 ? (
-              <p className="text-gray-500">No job postings yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {recentJobs.map((job) => (
-                  <div key={job.id} className="border-b pb-2">
-                    <p className="font-medium">{job.title}</p>
-                    <p className="text-sm text-gray-600">{job.company}</p>
-                    <p className="text-sm text-green-600">{job.location}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {job.required_skills.slice(0, 3).map((skill) => (
-                        <span key={skill} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                          {skill}
-                        </span>
-                      ))}
-                      {job.required_skills.length > 3 && (
-                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                          +{job.required_skills.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Recent Jobs */}
+        <Grid item xs={12} md={6}>
+          <Card elevation={2}>
+            <CardContent>
+              <Typography variant="h5" gutterBottom>
+                Recent Job Postings
+              </Typography>
+              {recentJobs.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <WorkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="body1" color="text.secondary">
+                    No job postings yet. Create your first job posting!
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ mt: 2 }}>
+                  {recentJobs.map((job) => (
+                    <Card key={job.id} variant="outlined" sx={{ mb: 2 }}>
+                      <CardContent sx={{ py: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                          {job.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {job.company} • {job.location}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {job.required_skills.slice(0, 3).map((skill) => (
+                            <Typography
+                              key={skill}
+                              variant="caption"
+                              sx={{
+                                backgroundColor: 'success.light',
+                                color: 'success.contrastText',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              {skill}
+                            </Typography>
+                          ))}
+                          {job.required_skills.length > 3 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                backgroundColor: 'grey.200',
+                                color: 'text.secondary',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              +{job.required_skills.length - 3} more
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
-// Resume Upload Component
+// Resume Upload Component with Material UI and Validation Test
 const ResumeUpload = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -182,6 +304,8 @@ const ResumeUpload = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [candidateSkills, setCandidateSkills] = useState([]);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -213,16 +337,9 @@ const ResumeUpload = () => {
         submitData.append('file', file);
       }
 
-      const response = await axios.post(`${API}/resume`, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      setSuccess(response.data);
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      const response = await api.uploadResume(submitData);
+      setSuccess(response);
+      setCandidateSkills(response.extracted_skills || []);
     } catch (error) {
       console.error('Error uploading resume:', error);
       setError(error.response?.data?.detail || 'Upload failed');
@@ -231,185 +348,210 @@ const ResumeUpload = () => {
     }
   };
 
+  const handleQuizComplete = (results) => {
+    console.log('Quiz completed:', results);
+    setTimeout(() => {
+      navigate('/');
+    }, 3000);
+  };
+
+  const handleSkipQuiz = () => {
+    navigate('/');
+  };
+
+  // Show validation quiz after successful upload
+  if (success && showQuiz) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <ValidationQuiz
+          candidateSkills={candidateSkills}
+          onComplete={handleQuizComplete}
+          onSkip={handleSkipQuiz}
+        />
+      </Container>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Upload Resume</h1>
-        
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+        Upload Resume
+      </Typography>
+      
+      <Card elevation={3}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Full Name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  variant="outlined"
                 />
-              </div>
+              </Grid>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
                   name="email"
+                  type="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  variant="outlined"
                 />
-              </div>
-            </div>
+              </Grid>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Resume File (PDF, DOCX, TXT)
-              </label>
-              <input
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.docx,.txt"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Upload Resume File"
+                  type="file"
+                  onChange={handleFileChange}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ accept: '.pdf,.docx,.txt' }}
+                  variant="outlined"
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Supported formats: PDF, DOCX, TXT
+                </Typography>
+              </Grid>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Resume Text (if not uploading file)
-              </label>
-              <textarea
-                name="resumeText"
-                value={formData.resumeText}
-                onChange={handleInputChange}
-                rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Paste your resume text here..."
-              />
-            </div>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Resume Text (if not uploading file)"
+                  name="resumeText"
+                  value={formData.resumeText}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={6}
+                  placeholder="Paste your resume text here..."
+                  variant="outlined"
+                />
+              </Grid>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skills (comma-separated)
-                </label>
-                <input
-                  type="text"
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Skills (comma-separated)"
                   name="skills"
                   value={formData.skills}
                   onChange={handleInputChange}
                   placeholder="JavaScript, Python, React, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  variant="outlined"
                 />
-              </div>
+              </Grid>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Years of Experience
-                </label>
-                <input
-                  type="number"
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Years of Experience"
                   name="experienceYears"
+                  type="number"
                   value={formData.experienceYears}
                   onChange={handleInputChange}
-                  min="0"
-                  max="50"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  inputProps={{ min: 0, max: 50 }}
+                  variant="outlined"
                 />
-              </div>
-            </div>
+              </Grid>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Education
-              </label>
-              <input
-                type="text"
-                name="education"
-                value={formData.education}
-                onChange={handleInputChange}
-                placeholder="Bachelor's in Computer Science"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Education"
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  placeholder="Bachelor's in Computer Science"
+                  variant="outlined"
+                />
+              </Grid>
 
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error">
+                    {error}
+                  </Alert>
+                </Grid>
+              )}
 
-            {success && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                Resume uploaded successfully! Candidate ID: {success.candidate_id}
-                <br />
-                Extracted Skills: {success.extracted_skills?.join(', ')}
-                <br />
-                Experience: {success.experience_years} years
-              </div>
-            )}
+              {success && (
+                <Grid item xs={12}>
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    Resume uploaded successfully! Candidate ID: {success.candidate_id}
+                    <br />
+                    Extracted Skills: {success.extracted_skills?.join(', ')}
+                    <br />
+                    Experience: {success.experience_years} years
+                  </Alert>
+                  
+                  {!showQuiz && (
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => setShowQuiz(true)}
+                        disabled={!success.extracted_skills || success.extracted_skills.length === 0}
+                      >
+                        Take Validation Test
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={handleSkipQuiz}
+                      >
+                        Skip and Continue
+                      </Button>
+                    </Box>
+                  )}
+                </Grid>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading || (!file && !formData.resumeText)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Processing...' : 'Upload Resume'}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  disabled={loading || (!file && !formData.resumeText)}
+                  sx={{ py: 2, fontSize: '1.1rem' }}
+                >
+                  {loading ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 2 }} />
+                      Processing...
+                    </>
+                  ) : (
+                    'Upload Resume'
+                  )}
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
+    </Container>
   );
 };
 
-// Job Posting Component
+// Job Posting Component with Material UI
 const JobPosting = () => {
-  const [formData, setFormData] = useState({
-    title: '',
-    company: '',
-    requiredSkills: '',
-    location: '',
-    salary: '',
-    description: '',
-    minExperienceYears: 0
-  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleJobSubmit = async (jobData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const jobData = {
-        title: formData.title,
-        company: formData.company,
-        required_skills: formData.requiredSkills.split(',').map(s => s.trim()).filter(s => s),
-        location: formData.location,
-        salary: formData.salary,
-        description: formData.description,
-        min_experience_years: parseInt(formData.minExperienceYears)
-      };
-
-      const response = await axios.post(`${API}/job`, jobData);
-      setSuccess(response.data);
+      const response = await api.createJob(jobData);
+      setSuccess(response);
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -422,146 +564,22 @@ const JobPosting = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Post a Job</h1>
-        
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Software Engineer"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company *
-                </label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Tech Corp"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Required Skills * (comma-separated)
-              </label>
-              <input
-                type="text"
-                name="requiredSkills"
-                value={formData.requiredSkills}
-                onChange={handleInputChange}
-                required
-                placeholder="JavaScript, React, Node.js, MongoDB"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="San Francisco, CA"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Salary Range
-                </label>
-                <input
-                  type="text"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleInputChange}
-                  placeholder="$80,000 - $120,000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Minimum Years of Experience
-              </label>
-              <input
-                type="number"
-                name="minExperienceYears"
-                value={formData.minExperienceYears}
-                onChange={handleInputChange}
-                min="0"
-                max="20"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Job Description *
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-                rows={6}
-                placeholder="Describe the job responsibilities, requirements, and company culture..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                Job posted successfully! Job ID: {success.id}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Creating...' : 'Post Job'}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+        Post a Job
+      </Typography>
+      
+      <JobForm
+        onSubmit={handleJobSubmit}
+        loading={loading}
+        error={error}
+        success={success}
+      />
+    </Container>
   );
 };
 
-// Search Component
+// Search Component with Material UI
 const SearchCandidates = () => {
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState('');
@@ -578,8 +596,8 @@ const SearchCandidates = () => {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/jobs`);
-      setJobs(response.data);
+      const jobsData = await api.getJobs();
+      setJobs(jobsData);
     } catch (error) {
       console.error('Error fetching jobs:', error);
       setError('Failed to fetch jobs');
@@ -596,17 +614,11 @@ const SearchCandidates = () => {
 
     setSearching(true);
     setError(null);
-    setResults([]); // Clear previous results
+    setResults([]);
     
     try {
-      const response = await axios.get(`${API}/search?job_id=${selectedJob}&k=${k}`);
-      console.log('Search response:', response.data); // Debug log
-      if (response.data && Array.isArray(response.data)) {
-        setResults(response.data);
-      } else {
-        setResults([]);
-        setError('No results returned from search');
-      }
+      const searchResults = await api.searchCandidates(selectedJob, k);
+      setResults(searchResults || []);
     } catch (error) {
       console.error('Error searching candidates:', error);
       setError(error.response?.data?.detail || 'Search failed');
@@ -616,224 +628,114 @@ const SearchCandidates = () => {
     }
   };
 
-  const getScoreColor = (score) => {
-    if (score >= 0.8) return 'text-green-600';
-    if (score >= 0.6) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getScoreBackground = (score) => {
-    if (score >= 0.8) return 'bg-green-100';
-    if (score >= 0.6) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Loading jobs...
+        </Typography>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Search Candidates</h1>
-        
-        {/* Search Form */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8 max-w-2xl mx-auto">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Job Posting
-              </label>
-              <select
-                value={selectedJob}
-                onChange={(e) => setSelectedJob(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Choose a job posting...</option>
-                {jobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title} - {job.company}
-                  </option>
-                ))}
-              </select>
-            </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+        Search Candidates
+      </Typography>
+      
+      {/* Search Form */}
+      <Card elevation={3} sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Grid container spacing={3} alignItems="end">
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Select Job Posting</InputLabel>
+                <Select
+                  value={selectedJob}
+                  onChange={(e) => setSelectedJob(e.target.value)}
+                  label="Select Job Posting"
+                >
+                  <MenuItem value="">Choose a job posting...</MenuItem>
+                  {jobs.map((job) => (
+                    <MenuItem key={job.id} value={job.id}>
+                      {job.title} - {job.company}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Results (k)
-              </label>
-              <input
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                label="Number of Results"
                 type="number"
                 value={k}
                 onChange={(e) => setK(parseInt(e.target.value) || 10)}
-                min="1"
-                max="50"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                inputProps={{ min: 1, max: 50 }}
+                variant="outlined"
               />
-            </div>
+            </Grid>
             
+            <Grid item xs={12} md={3}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                onClick={handleSearch}
+                disabled={searching || !selectedJob}
+                startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
+                sx={{ py: 1.5 }}
+              >
+                {searching ? 'Searching...' : 'Search'}
+              </Button>
+            </Grid>
+
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
+              <Grid item xs={12}>
+                <Alert severity="error">
+                  {error}
+                </Alert>
+              </Grid>
             )}
-            
-            <button
-              onClick={handleSearch}
-              disabled={searching || !selectedJob}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {searching ? 'Searching...' : 'Search Candidates'}
-            </button>
-          </div>
-        </div>
+          </Grid>
+        </CardContent>
+      </Card>
 
-        {/* Results */}
-        {searching && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Searching for candidates...</p>
-          </div>
-        )}
-        
-        {!searching && results.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-center text-gray-800">
-              Top {results.length} Matching Candidates
-            </h2>
-            
-            {results.map((result, index) => (
-              <div key={result.candidate_id} className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      #{index + 1} {result.candidate_name}
-                    </h3>
-                    <p className="text-gray-600">{result.candidate_email}</p>
-                    <p className="text-sm text-gray-500">
-                      {result.candidate_experience_years} years experience
-                    </p>
-                  </div>
-                  <div className={`px-4 py-2 rounded-lg ${getScoreBackground(result.total_score)}`}>
-                    <span className={`text-lg font-bold ${getScoreColor(result.total_score)}`}>
-                      {(result.total_score * 100).toFixed(1)}%
-                    </span>
-                    <p className="text-xs text-gray-600">Match Score</p>
-                  </div>
-                </div>
-
-                {/* Skills */}
-                <div className="mb-4">
-                  <h4 className="font-medium text-gray-700 mb-2">Skills</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {result.candidate_skills.map((skill) => {
-                      const isMatched = result.score_breakdown.matched_skills.includes(skill);
-                      return (
-                        <span
-                          key={skill}
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            isMatched
-                              ? 'bg-green-100 text-green-800 border border-green-200'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {skill} {isMatched && '✓'}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Score Breakdown */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-1">Semantic Match</h4>
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${result.semantic_score * 100}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {(result.semantic_score * 100).toFixed(1)}% (40% weight)
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-1">Skill Overlap</h4>
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${result.skill_overlap_score * 100}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {(result.skill_overlap_score * 100).toFixed(1)}% (40% weight)
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-1">Experience Match</h4>
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{ width: `${result.experience_match_score * 100}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {(result.experience_match_score * 100).toFixed(1)}% (20% weight)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Missing Skills */}
-                {result.score_breakdown.missing_skills.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-700 mb-2">Missing Skills</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {result.score_breakdown.missing_skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs border border-red-200"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {results.length === 0 && !searching && (
-          <div className="text-center text-gray-500 mt-8">
-            Select a job posting and click search to find matching candidates.
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Results */}
+      <CandidateList
+        candidates={[]}
+        matchResults={results}
+        loading={searching}
+        error={null}
+        title={results.length > 0 ? `Top ${results.length} Matching Candidates` : "Search Results"}
+        showScoreBreakdown={true}
+        emptyMessage="Select a job posting and click search to find matching candidates."
+        isSearchResults={true}
+      />
+    </Container>
   );
 };
 
+// Main App Component
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/upload-resume" element={<ResumeUpload />} />
-          <Route path="/post-job" element={<JobPosting />} />
-          <Route path="/search" element={<SearchCandidates />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div className="App">
+        <BrowserRouter>
+          <Navigation />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/upload-resume" element={<ResumeUpload />} />
+            <Route path="/post-job" element={<JobPosting />} />
+            <Route path="/search" element={<SearchCandidates />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </ThemeProvider>
   );
 }
 
