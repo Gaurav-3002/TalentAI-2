@@ -117,9 +117,24 @@ const SearchCandidates = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-        Search Candidates
+      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+        {isGuestUser() ? 'Browse Available Jobs' : 'Search Candidates'}
       </Typography>
+      
+      {isGuestUser() && (
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="body1" color="info.main" sx={{ 
+            backgroundColor: 'info.light', 
+            p: 2, 
+            borderRadius: 1,
+            display: 'inline-block',
+            maxWidth: 600
+          }}>
+            🎯 <strong>Guest Mode:</strong> You can browse available job postings and see job requirements. 
+            For full access including candidate profiles, please create an account.
+          </Typography>
+        </Box>
+      )}
       
       {/* Search Form */}
       {jobs.length === 0 ? (
