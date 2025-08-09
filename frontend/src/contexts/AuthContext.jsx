@@ -153,19 +153,23 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = () => hasRole('admin');
   const isRecruiter = () => hasRole(['admin', 'recruiter']);
   const isCandidate = () => hasRole('candidate');
+  const isGuestUser = () => isGuest || hasRole('guest');
 
   const value = {
     user,
     token,
     loading,
     isAuthenticated,
+    isGuest,
     login,
     register,
+    loginAsGuest,
     logout,
     hasRole,
     isAdmin,
     isRecruiter,
-    isCandidate
+    isCandidate,
+    isGuestUser
   };
 
   return (
