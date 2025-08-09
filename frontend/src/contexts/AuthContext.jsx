@@ -104,15 +104,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginAsGuest = () => {
+    // Set guest mode
+    localStorage.setItem('guest_mode', 'true');
+    
+    // Create guest user object
+    const guestUser = {
+      id: 'guest',
+      email: 'guest@demo.com',
+      full_name: 'Guest User',
+      role: 'guest',
+      is_active: true,
+      is_verified: false
+    };
+    
+    // Update state
+    setUser(guestUser);
+    setIsAuthenticated(true);
+    setIsGuest(true);
+    
+    return { success: true, user: guestUser };
+  };
+
   const logout = () => {
     // Clear stored data
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('guest_mode');
     
     // Reset state
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
+    setIsGuest(false);
     
     // Clear token from API headers
     api.setAuthToken(null);
