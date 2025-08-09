@@ -589,8 +589,11 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=f"Resume processing failed: {str(e)}")
 
 @api_router.post("/job", response_model=JobPosting)
-async def create_job_posting(job_data: JobPostingCreate):
-    """Create a new job posting"""
+async def create_job_posting(
+    job_data: JobPostingCreate,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Create a new job posting (recruiter/admin only)"""
     try:
         # Normalize skills
         normalized_skills = normalize_skills(job_data.required_skills)
@@ -613,7 +616,8 @@ async def create_job_posting(job_data: JobPostingCreate):
             salary=job_data.salary,
             description=job_data.description,
             min_experience_years=min_exp,
-            embedding=embedding
+            embedding=embedding,
+            created_by=current_user.user_id
         )
         
         # Store in database
