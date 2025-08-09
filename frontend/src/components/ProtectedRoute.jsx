@@ -32,8 +32,39 @@ const ProtectedRoute = ({ children, requiredRoles = [], allowGuest = false, redi
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check role permissions if required roles are specified
-  if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
+  // If it's a guest user and guest access is not allowed for this route
+  if (isGuestUser() && !allowGuest) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '60vh',
+          flexDirection: 'column',
+          gap: 2
+        }}
+      >
+        <Typography variant="h4" color="warning.main" gutterBottom>
+          Guest Access Limited
+        </Typography>
+        <Typography variant="body1" color="text.secondary" textAlign="center">
+          This feature requires a full account. Please log in or create an account to access this page.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          <Button variant="contained" onClick={() => window.location.href = '/login'}>
+            Login
+          </Button>
+          <Button variant="outlined" onClick={() => window.location.href = '/register'}>
+            Create Account
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Check role permissions if required roles are specified (skip for guest users)
+  if (requiredRoles.length > 0 && !isGuestUser() && !hasRole(requiredRoles)) {
     return (
       <Box 
         sx={{ 
