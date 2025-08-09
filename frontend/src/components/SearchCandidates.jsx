@@ -38,13 +38,13 @@ const SearchCandidates = () => {
   const [k, setK] = useState(10);
   const [blindScreening, setBlindScreening] = useState(false);
 
-  const { isRecruiter } = useAuth();
+  const { isRecruiter, isGuestUser } = useAuth();
 
   useEffect(() => {
-    if (isRecruiter()) {
+    if (isRecruiter() || isGuestUser()) {
       fetchJobs();
     }
-  }, [isRecruiter]);
+  }, [isRecruiter, isGuestUser]);
 
   const fetchJobs = async () => {
     setLoading(true);
