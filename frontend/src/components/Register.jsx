@@ -39,8 +39,8 @@ const Register = () => {
       [e.target.name]: e.target.value
     });
     // Clear messages when user starts typing
-    if (error) setError('');
-    if (success) setSuccess('');
+    if (error) setError(null);
+    if (success) setSuccess(null);
   };
 
   const validateForm = () => {
