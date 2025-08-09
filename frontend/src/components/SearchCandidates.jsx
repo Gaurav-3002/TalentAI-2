@@ -91,7 +91,7 @@ const SearchCandidates = () => {
     }
   };
 
-  if (!isRecruiter()) {
+  if (!isRecruiter() && !isGuestUser()) {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
         <Typography variant="h4" color="error" gutterBottom>
