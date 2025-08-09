@@ -69,6 +69,15 @@ async def create_indexes():
         # Create text indexes for search functionality
         await db.candidates.create_index([("skills", "text"), ("resume_text", "text")])
         await db.job_postings.create_index([("required_skills", "text"), ("description", "text")])
+        
+        # Create indexes for new collections
+        await db.users.create_index([("email", 1)], unique=True)
+        await db.users.create_index([("role", 1)])
+        await db.access_logs.create_index([("user_id", 1)])
+        await db.access_logs.create_index([("candidate_id", 1)])
+        await db.access_logs.create_index([("timestamp", -1)])
+        await db.access_logs.create_index([("user_id", 1), ("timestamp", -1)])
+        
     except Exception as e:
         logger.info(f"Index creation info: {e}")
 
