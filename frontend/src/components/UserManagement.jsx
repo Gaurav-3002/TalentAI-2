@@ -138,7 +138,7 @@ const UserManagement = () => {
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
           {success}
         </Alert>
       )}
