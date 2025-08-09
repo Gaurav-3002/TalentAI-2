@@ -226,10 +226,27 @@ const AccessLogs = () => {
               <TableBody>
                 {filteredLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <Typography variant="body2" color="text.secondary">
-                        No access logs found
-                      </Typography>
+                    <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box
+                          component="img"
+                          src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/zn9xfw7g_166.png"
+                          alt="No logs"
+                          sx={{
+                            width: '100%',
+                            maxWidth: 200,
+                            height: 'auto',
+                            mb: 2,
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                          No Access Logs Found
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {logs.length === 0 ? 'No access activities have been recorded yet.' : 'No logs match your current filters.'}
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ) : (
