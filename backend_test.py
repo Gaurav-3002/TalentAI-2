@@ -846,31 +846,48 @@ class JobMatchingAPITester:
         )
 
     def run_all_tests(self):
-        """Run all tests"""
-        print("🚀 Starting Job Matching API Tests")
+        """Run all tests including Sprint 6 security features"""
+        print("🚀 Starting Job Matching API Tests - Sprint 6 Security Features")
         print(f"🌐 Base URL: {self.base_url}")
         
         try:
+            # Sprint 6 Security Tests
+            self.test_seeded_users()
+            self.test_authentication_system()
+            self.test_jwt_token_validation()
+            self.test_role_based_access_control()
+            self.test_user_management()
+            self.test_protected_endpoints()
+            
+            # Authenticated functionality tests
+            self.test_resume_upload_authenticated()
+            self.test_job_posting_authenticated()
+            self.test_access_logging()
+            self.test_pii_redaction_blind_screening()
+            
+            # Basic functionality tests (legacy)
             self.test_basic_endpoints()
-            self.test_resume_upload_text()
-            self.test_job_posting()
             self.test_candidate_search()
             self.test_individual_endpoints()
             self.test_error_cases()
             
             # Print final results
             print("\n" + "="*60)
-            print("📊 FINAL TEST RESULTS")
+            print("📊 FINAL TEST RESULTS - SPRINT 6 SECURITY")
             print("="*60)
             print(f"Tests Run: {self.tests_run}")
             print(f"Tests Passed: {self.tests_passed}")
             print(f"Tests Failed: {self.tests_run - self.tests_passed}")
             print(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
             
+            if self.created_users:
+                print(f"\n👥 Created {len(self.created_users)} test users")
             if self.created_candidates:
-                print(f"\n📝 Created {len(self.created_candidates)} test candidates")
+                print(f"📝 Created {len(self.created_candidates)} test candidates")
             if self.created_jobs:
                 print(f"💼 Created {len(self.created_jobs)} test jobs")
+            if self.auth_tokens:
+                print(f"🔐 Authenticated as {len(self.auth_tokens)} different user roles")
             
             return self.tests_passed == self.tests_run
             
