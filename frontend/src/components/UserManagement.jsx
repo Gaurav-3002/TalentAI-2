@@ -35,8 +35,8 @@ import { useAuth } from '../contexts/AuthContext';
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [editingRole, setEditingRole] = useState('');
 
