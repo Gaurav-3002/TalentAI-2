@@ -168,8 +168,56 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Recent Data - Only show to recruiters */}
-      {isRecruiter() && (
+      {/* Recent Data - Show different content based on user type */}
+      {isGuestUser() ? (
+        // Guest user gets a special welcome section with demo information
+        <Card elevation={2} sx={{ mb: 4 }}>
+          <CardContent sx={{ py: 6, textAlign: 'center' }}>
+            <Box
+              component="img"
+              src="https://customer-assets.emergentagent.com/job_9ed72db7-5d32-4d00-a440-3eb81b39448c/artifacts/xn7kefv8_Top-10-Job-Portals-in-India-That-Makes-Them-Good-min.jpg"
+              alt="Job Portal Demo"
+              sx={{
+                width: '100%',
+                maxWidth: 400,
+                height: 'auto',
+                mb: 3,
+                borderRadius: 2,
+              }}
+            />
+            <Typography variant="h4" gutterBottom color="primary.main">
+              Welcome to Job Matcher Demo! 🎯
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
+              You're currently in <strong>Guest Mode</strong> with limited access. Explore our job matching platform 
+              and browse available opportunities. For full access including resume upload and job posting, please create an account.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button 
+                variant="contained" 
+                size="large" 
+                onClick={() => window.location.href = '/search'}
+              >
+                🔍 Browse Jobs
+              </Button>
+              <Button 
+                variant="outlined" 
+                size="large"
+                onClick={() => window.location.href = '/register'}
+              >
+                📝 Create Full Account
+              </Button>
+              <Button 
+                variant="text" 
+                size="large"
+                onClick={() => window.location.href = '/login'}
+              >
+                🔐 Login
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      ) : isRecruiter() && (
         <>
           {/* Show main empty state if no candidates and no jobs */}
           {recentCandidates.length === 0 && recentJobs.length === 0 ? (
