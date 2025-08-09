@@ -27,8 +27,8 @@ const Register = () => {
     role: 'candidate'
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const { register } = useAuth();
   const navigate = useNavigate();
