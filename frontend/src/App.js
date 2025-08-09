@@ -54,11 +54,23 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const data = await api.getDashboardData(false); // Don't use blind mode for dashboard
-      setRecentCandidates(data.candidates.slice(0, 5));
-      setRecentJobs(data.jobs.slice(0, 5));
-      setStats(data.stats);
-      setError(null);
+      // For guest users, show public demo data or limited access
+      if (isGuestUser()) {
+        // Set some demo stats for guest users
+        setStats({
+          candidatesCount: 25,
+          jobsCount: 12
+        });
+        setRecentCandidates([]);
+        setRecentJobs([]);
+        setError(null);
+      } else {
+        const data = await api.getDashboardData(false); // Don't use blind mode for dashboard
+        setRecentCandidates(data.candidates.slice(0, 5));
+        setRecentJobs(data.jobs.slice(0, 5));
+        setStats(data.stats);
+        setError(null);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setError('Failed to load dashboard data');
