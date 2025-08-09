@@ -266,9 +266,8 @@ class JobMatchingAPITester:
             success, response = self.run_test(
                 "Update user role (admin access)",
                 "PUT",
-                f"users/{user_id}/role",
+                f"users/{user_id}/role?new_role=recruiter",
                 200,
-                data="recruiter",  # New role
                 auth_token=self.auth_tokens['admin']
             )
 
