@@ -76,7 +76,7 @@ const Login = () => {
 
   const handleDemoLogin = async (email, password, role) => {
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const result = await login(email, password);
