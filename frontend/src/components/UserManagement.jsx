@@ -151,19 +151,41 @@ const UserManagement = () => {
             </Typography>
           </Box>
 
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Registered</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+          {users.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Box
+                component="img"
+                src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/urrv20kt_Job_portal_about.png"
+                alt="User Management"
+                sx={{
+                  width: '100%',
+                  maxWidth: 300,
+                  height: 'auto',
+                  mb: 3,
+                  borderRadius: 2,
+                }}
+              />
+              <Typography variant="h5" gutterBottom color="primary.main">
+                No Users Found
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                No users have registered on the platform yet. Users will appear here once they sign up.
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Registered</TableCell>
+                    <TableCell align="center">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id} hover>
                     <TableCell>
