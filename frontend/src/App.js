@@ -46,7 +46,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const { isRecruiter, user } = useAuth();
+  const { isRecruiter, user, isGuestUser } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
