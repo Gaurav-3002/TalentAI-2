@@ -693,7 +693,14 @@ const SearchCandidates = () => {
         </div>
 
         {/* Results */}
-        {results.length > 0 && (
+        {searching && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Searching for candidates...</p>
+          </div>
+        )}
+        
+        {!searching && results.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-center text-gray-800">
               Top {results.length} Matching Candidates
