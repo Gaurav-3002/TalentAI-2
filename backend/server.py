@@ -121,6 +121,12 @@ async def create_indexes():
 # Create the main app without a prefix
 app = FastAPI(title="Job Matching API", version="1.0.0")
 
+# Set up observability 
+tracer, observability_logger = setup_observability(
+    app_name="talentai-2",
+    enable_console=os.getenv("ENABLE_CONSOLE_LOGGING", "false").lower() == "true"
+)
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
