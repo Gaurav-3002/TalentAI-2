@@ -872,7 +872,7 @@ async def search_candidates(
     blind_screening: bool = False,
     current_user: TokenData = Depends(require_recruiter)
 ):
-    """Search and rank candidates for a job with optional blind screening"""
+    """Search and rank candidates for a job with optional blind screening using ML-optimized weights"""
     try:
         # Get job posting
         job = await db.job_postings.find_one({"id": job_id})
@@ -880,6 +880,24 @@ async def search_candidates(
             raise HTTPException(status_code=404, detail="Job posting not found")
         
         job_obj = JobPosting(**job)
+        
+        # Get optimal weights using Learning-to-Rank engine
+        learning_engine = getattr(app.state, "learning_engine", None)
+        if learning_engine:
+            optimal_weights = await learning_engine.get_optimal_weights(
+                job_category=job_obj.title,  # Could be improved with proper categorization
+                recruiter_id=current_user.user_id
+            )
+            weights = {
+                'semantic': optimal_weights.semantic_weight,
+                'skill': optimal_weights.skill_weight,
+                'experience': optimal_weights.experience_weight
+            }
+            logger.info(f"Using ML-optimized weights: {weights}, confidence: {optimal_weights.confidence_score:.3f}")
+        else:
+            # Fallback to fixed weights if learning engine not available
+            weights = {'semantic': 0.4, 'skill': 0.4, 'experience': 0.2}
+            logger.info("Using default fixed weights (Learning engine not available)")
         
         # Get all candidates
         candidates_cursor = db.candidates.find()
