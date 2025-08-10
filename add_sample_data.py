@@ -72,7 +72,8 @@ async def add_sample_data():
             "education": "Bachelor's in Computer Engineering",
             "resume_text": "Mobile app developer specializing in cross-platform development with React Native and Flutter.",
             "parsing_method": "basic",
-            "parsing_confidence": None
+            "parsing_confidence": None,
+            "created_by": "admin"
         },
         {
             "name": "Emma Thompson",
