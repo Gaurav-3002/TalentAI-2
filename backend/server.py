@@ -52,6 +52,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from embedding_service import EmbeddingService
 from vector_store import FAISSService
 
+# Learning-to-Rank Service
+from learning_to_rank import LearningToRankEngine
+
 # Advanced Resume Parser
 from advanced_resume_parser import advanced_parser
 
