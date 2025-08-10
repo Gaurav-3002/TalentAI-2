@@ -51,5 +51,6 @@ opentelemetry-instrumentation-pymongo>=0.57b0
 opentelemetry-instrumentation-redis>=0.57b0
 opentelemetry-exporter-prometheus>=0.57b0
 opentelemetry-instrumentation-logging>=0.57b0
+opentelemetry-semantic-conventions>=0.57b0
 prometheus-client>=0.19.0
 importlib-metadata>=6.0.0
