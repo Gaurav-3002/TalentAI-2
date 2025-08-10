@@ -713,6 +713,19 @@ async def create_job_posting(
         
         # Store in database
         await db.job_postings.insert_one(job.dict())
+
+        # Add to FAISS as job vector to support semantic lookups
+        try:
+            faiss = getattr(app.state, "faiss", None)
+            if faiss and job.embedding:
+                import numpy as np
+                await faiss.add_vectors(
+                    np.array([job.embedding], dtype=float),
+                    [{"type": "job", "job_id": job.id, "title": job.title, "company": job.company}]
+                )
+                await faiss.save()
+        except Exception as e:
+            logger.error(f"FAISS add job failed: {e}")
         
         return job
         
