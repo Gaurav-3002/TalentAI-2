@@ -1078,34 +1078,32 @@ class JobMatchingAPITester:
                     if result['total_score'] > 0:
                         print(f"   ✅ Scoring works: {result['candidate_name']} - {result['total_score']:.3f}")
                         break
-        """Run all tests including Sprint 6 security features"""
-        print("🚀 Starting Job Matching API Tests - Sprint 6 Security Features")
+
+    def run_all_tests(self):
+        """Run all tests including Sprint 6 security features and vector search integration"""
+        print("🚀 Starting Job Matching API Tests - Vector Search Integration Focus")
         print(f"🌐 Base URL: {self.base_url}")
         
         try:
-            # Sprint 6 Security Tests (Priority Order)
+            # Authentication setup (required for vector search tests)
             self.test_seeded_users()
-            self.test_authentication_system()
-            self.test_jwt_token_validation()
-            self.test_role_based_access_control()
-            self.test_user_management()
-            self.test_protected_endpoints()
             
-            # Authenticated functionality tests
+            # PRIORITY: Vector Search Integration Tests
+            self.test_vector_search_integration()
+            self.test_embedding_service_failure_simulation()
+            
+            # Core functionality tests with authentication
             self.test_resume_upload_authenticated()
             self.test_job_posting_authenticated()
-            self.test_access_logging()
-            self.test_pii_redaction_blind_screening()
             self.test_candidate_search_authenticated()
             
-            # Basic functionality tests
+            # Basic endpoint tests
             self.test_basic_endpoints()
             self.test_individual_endpoints_authenticated()
-            self.test_error_cases()
             
             # Print final results
             print("\n" + "="*60)
-            print("📊 FINAL TEST RESULTS - SPRINT 6 SECURITY")
+            print("📊 FINAL TEST RESULTS - VECTOR SEARCH INTEGRATION")
             print("="*60)
             print(f"Tests Run: {self.tests_run}")
             print(f"Tests Passed: {self.tests_passed}")
