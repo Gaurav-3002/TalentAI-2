@@ -171,6 +171,9 @@ class CandidateResponse(BaseModel):
     experience_years: int
     education: str
     created_at: datetime
+    parsing_method: str = "basic"
+    parsing_confidence: Optional[float] = None
+    has_structured_data: bool = False
     
     @classmethod
     def from_candidate(cls, candidate: Candidate, blind_mode: bool = False):
