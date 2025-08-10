@@ -930,6 +930,29 @@ logger = logging.getLogger(__name__)
 async def startup_event():
     await create_indexes()
     await seed_initial_users()
+    
+    # Initialize EmbeddingService
+    try:
+        embedding_service = EmbeddingService()
+        app.state.embedding_service = embedding_service
+        logger.info("EmbeddingService initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize EmbeddingService: {e}")
+        app.state.embedding_service = None
+    
+    # Initialize FAISS
+    try:
+        faiss_service = FAISSService(
+            index_path="/app/backend/faiss_data/index.bin",
+            metadata_path="/app/backend/faiss_data/meta.json"
+        )
+        await faiss_service.initialize()
+        app.state.faiss = faiss_service
+        logger.info("FAISS service initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize FAISS: {e}")
+        app.state.faiss = None
+    
     logger.info("Job Matching API started successfully")
 
 async def seed_initial_users():
