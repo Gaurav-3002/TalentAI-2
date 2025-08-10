@@ -154,7 +154,7 @@ const SearchCandidates = () => {
           <CardContent sx={{ p: 6, textAlign: 'center' }}>
             <Box
               component="img"
-              src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/ax6ta69e_11072023_230143_Job-Portal-App-Development.png"
+              src="/empty-states/no-jobs.png"
               alt="Job Portal Development"
               sx={{
                 width: '100%',
