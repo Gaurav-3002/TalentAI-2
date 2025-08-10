@@ -513,9 +513,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced resume parsing with LLM integration"
-    - "New parsed-resume endpoint"
-    - "Enhanced candidate response fields"
+    - "Learning-to-Rank Algorithm implementation"
+    - "Learning-to-Rank endpoints"
+    - "Dynamic search weight optimization"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -535,3 +535,5 @@ agent_communication:
     message: "Fixed login/register by resolving backend dependency: added litellm to requirements (needed by emergentintegrations) and restarted backend. Backend seeded demo users on startup. Verified: Admin and Recruiter demo logins succeed; New user registration returns 200 and subsequent login works."
   - agent: "testing"
     message: "✅ PHASE 2 ENHANCED RESUME PARSING TESTING COMPLETED SUCCESSFULLY - Comprehensive testing of enhanced resume parsing with LLM integration completed with 100% success rate. Key findings: (1) Enhanced resume upload endpoint working perfectly with graceful fallback from LLM to basic parsing when GEMINI_API_KEY is placeholder. (2) New /api/candidates/{id}/parsed-resume endpoint properly implemented and secured. (3) Enhanced candidate response fields (parsing_method, parsing_confidence, has_structured_data) correctly added to all endpoints. (4) Tested multiple resume formats (technical, marketing, data science) - all processed successfully. (5) All existing functionality maintained - authentication, job creation, candidate search, access control all working. (6) Backward compatibility fully preserved. System ready for production with proper GEMINI_API_KEY configuration."
+  - agent: "testing"
+    message: "✅ LEARNING-TO-RANK ALGORITHM TESTING COMPLETED SUCCESSFULLY - Comprehensive testing of new Learning-to-Rank implementation completed with 100% success rate (25/25 tests passed). All features working perfectly: (1) Learning endpoints properly secured with role-based authentication - GET /api/learning/weights (recruiter), POST /api/interactions (recruiter), GET /api/learning/metrics (admin), POST /api/learning/retrain (admin). (2) Dynamic search algorithm now uses ML-optimized weights instead of fixed weights, with proper fallback to defaults (0.4, 0.4, 0.2) when insufficient training data. (3) Interaction recording system functional with proper reward calculation (click=0.1, shortlist=0.3, application=0.7, interview=0.9, hire=1.0, reject=-0.5). (4) Search result caching working for learning purposes. (5) Performance metrics comprehensive with interaction breakdown. (6) PII redaction working in blind screening. (7) Error handling robust. System ready for production use with reinforcement learning capabilities."
