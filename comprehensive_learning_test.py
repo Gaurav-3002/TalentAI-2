@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 class ComprehensiveLearningTest:
-    def __init__(self, base_url="https://b80da97e-65c1-4ad2-9c3b-27c9d4f8d9ca.preview.emergentagent.com"):
+    def __init__(self, base_url="https://b0f01cda-2385-4551-81cb-cf84983e55ee.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
