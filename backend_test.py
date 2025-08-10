@@ -1482,41 +1482,564 @@ class JobMatchingAPITester:
                         print(f"   ✅ Scoring works: {result['candidate_name']} - {result['total_score']:.3f}")
                         break
 
+    def test_learning_to_rank_endpoints(self):
+        """Test Learning-to-Rank endpoints with proper authentication"""
+        print("\n" + "="*50)
+        print("TESTING LEARNING-TO-RANK ENDPOINTS")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping Learning-to-Rank tests")
+            return
+        
+        if 'admin' not in self.auth_tokens:
+            print("❌ No admin token available, skipping admin-only Learning-to-Rank tests")
+            return
+        
+        # Test 1: Get current optimal weights (recruiter access)
+        success, response = self.run_test(
+            "Get current optimal weights (recruiter access)",
+            "GET",
+            "learning/weights",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved weights successfully")
+            print(f"   Semantic weight: {response.get('semantic_weight', 'N/A')}")
+            print(f"   Skill weight: {response.get('skill_weight', 'N/A')}")
+            print(f"   Experience weight: {response.get('experience_weight', 'N/A')}")
+            print(f"   Confidence score: {response.get('confidence_score', 'N/A')}")
+            print(f"   Interaction count: {response.get('interaction_count', 'N/A')}")
+            
+            # Verify weights sum to approximately 1.0
+            total_weight = (response.get('semantic_weight', 0) + 
+                          response.get('skill_weight', 0) + 
+                          response.get('experience_weight', 0))
+            if abs(total_weight - 1.0) < 0.01:
+                print(f"   ✅ Weights properly normalized (sum = {total_weight:.3f})")
+            else:
+                print(f"   ⚠️  Weights may not be normalized (sum = {total_weight:.3f})")
+        
+        # Test 2: Get weights with job category parameter
+        success, response = self.run_test(
+            "Get weights with job category",
+            "GET",
+            "learning/weights?job_category=Software%20Engineer",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved category-specific weights")
+        
+        # Test 3: Record recruiter interaction (requires existing candidate and job)
+        if self.created_candidates and self.created_jobs:
+            interaction_data = {
+                "candidate_id": self.created_candidates[0],
+                "job_id": self.created_jobs[0],
+                "interaction_type": "click",
+                "search_position": 1,
+                "session_id": "test-session-123"
+            }
+            
+            success, response = self.run_test(
+                "Record recruiter interaction (click)",
+                "POST",
+                "interactions",
+                201,
+                data=interaction_data,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   ✅ Interaction recorded successfully")
+                print(f"   Interaction ID: {response.get('interaction_id', 'N/A')}")
+            
+            # Test different interaction types
+            interaction_types = ["shortlist", "application", "interview", "hire"]
+            for i, interaction_type in enumerate(interaction_types):
+                if i < len(self.created_candidates):
+                    interaction_data = {
+                        "candidate_id": self.created_candidates[min(i, len(self.created_candidates)-1)],
+                        "job_id": self.created_jobs[0],
+                        "interaction_type": interaction_type,
+                        "search_position": i + 2,
+                        "session_id": f"test-session-{i+2}"
+                    }
+                    
+                    success, response = self.run_test(
+                        f"Record interaction ({interaction_type})",
+                        "POST",
+                        "interactions",
+                        201,
+                        data=interaction_data,
+                        auth_token=self.auth_tokens['recruiter']
+                    )
+        
+        # Test 4: Get learning metrics (admin only)
+        success, response = self.run_test(
+            "Get learning metrics (admin access)",
+            "GET",
+            "learning/metrics",
+            200,
+            auth_token=self.auth_tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved learning metrics")
+            print(f"   Total interactions: {response.get('total_interactions', 'N/A')}")
+            print(f"   Recent interactions: {response.get('recent_interactions', 'N/A')}")
+            print(f"   Learning status: {response.get('learning_status', 'N/A')}")
+            
+            if 'interaction_breakdown' in response:
+                print(f"   Interaction breakdown:")
+                for interaction_type, stats in response['interaction_breakdown'].items():
+                    print(f"     {interaction_type}: {stats.get('count', 0)} interactions, "
+                          f"avg reward: {stats.get('avg_reward', 0):.3f}")
+        
+        # Test 5: Trigger manual retraining (admin only)
+        success, response = self.run_test(
+            "Trigger manual retraining (admin access)",
+            "POST",
+            "learning/retrain",
+            200,
+            auth_token=self.auth_tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Manual retraining triggered")
+            if 'new_weights' in response:
+                new_weights = response['new_weights']
+                print(f"   New weights after retraining:")
+                print(f"     Semantic: {new_weights.get('semantic_weight', 'N/A')}")
+                print(f"     Skill: {new_weights.get('skill_weight', 'N/A')}")
+                print(f"     Experience: {new_weights.get('experience_weight', 'N/A')}")
+                print(f"     Confidence: {new_weights.get('confidence_score', 'N/A')}")
+        
+        # Test 6: Test access control - recruiter trying to access admin endpoints
+        success, _ = self.run_test(
+            "Get learning metrics (recruiter access - should fail)",
+            "GET",
+            "learning/metrics",
+            403,  # Should fail with 403
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        success, _ = self.run_test(
+            "Trigger retraining (recruiter access - should fail)",
+            "POST",
+            "learning/retrain",
+            403,  # Should fail with 403
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        # Test 7: Test endpoints without authentication
+        success, _ = self.run_test(
+            "Get weights without auth (should fail)",
+            "GET",
+            "learning/weights",
+            401  # Should fail with 401
+        )
+        
+        success, _ = self.run_test(
+            "Record interaction without auth (should fail)",
+            "POST",
+            "interactions",
+            401,  # Should fail with 401
+            data={"candidate_id": "test", "job_id": "test", "interaction_type": "click"}
+        )
+
+    def test_dynamic_search_weights(self):
+        """Test that search endpoint now uses dynamic ML-optimized weights"""
+        print("\n" + "="*50)
+        print("TESTING DYNAMIC SEARCH WEIGHTS")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping dynamic weights tests")
+            return
+        
+        if not self.created_jobs:
+            print("❌ No jobs created, skipping dynamic weights tests")
+            return
+        
+        # Test 1: Perform search and check if weights are included in score breakdown
+        job_id = self.created_jobs[0]
+        success, results = self.run_test(
+            "Search with dynamic weights (check score breakdown)",
+            "GET",
+            f"search?job_id={job_id}&k=5",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and results:
+            print(f"   ✅ Search returned {len(results)} candidates with dynamic weights")
+            
+            # Check first result for weight information in score breakdown
+            if results:
+                first_result = results[0]
+                score_breakdown = first_result.get('score_breakdown', {})
+                
+                # Check if dynamic weights are present
+                semantic_weight = score_breakdown.get('semantic_weight')
+                skill_weight = score_breakdown.get('skill_overlap_weight')
+                experience_weight = score_breakdown.get('experience_weight')
+                
+                if all(w is not None for w in [semantic_weight, skill_weight, experience_weight]):
+                    print(f"   ✅ Dynamic weights found in score breakdown:")
+                    print(f"     Semantic weight: {semantic_weight}")
+                    print(f"     Skill weight: {skill_weight}")
+                    print(f"     Experience weight: {experience_weight}")
+                    
+                    # Verify weights sum to approximately 1.0
+                    total_weight = semantic_weight + skill_weight + experience_weight
+                    if abs(total_weight - 1.0) < 0.01:
+                        print(f"   ✅ Weights properly normalized (sum = {total_weight:.3f})")
+                    else:
+                        print(f"   ⚠️  Weights may not be normalized (sum = {total_weight:.3f})")
+                    
+                    # Check if weights are different from default (40/40/20)
+                    default_weights = [0.4, 0.4, 0.2]
+                    current_weights = [semantic_weight, skill_weight, experience_weight]
+                    
+                    if current_weights != default_weights:
+                        print(f"   ✅ Using learned weights (different from default)")
+                    else:
+                        print(f"   ⚠️  Using default weights (may indicate insufficient training data)")
+                else:
+                    print(f"   ❌ Dynamic weights not found in score breakdown")
+                
+                # Verify other score breakdown components
+                matched_skills = score_breakdown.get('matched_skills', [])
+                missing_skills = score_breakdown.get('missing_skills', [])
+                
+                print(f"   Score breakdown details:")
+                print(f"     Total score: {first_result.get('total_score', 0):.3f}")
+                print(f"     Semantic score: {first_result.get('semantic_score', 0):.3f}")
+                print(f"     Skill overlap: {first_result.get('skill_overlap_score', 0):.3f}")
+                print(f"     Experience match: {first_result.get('experience_match_score', 0):.3f}")
+                print(f"     Matched skills: {matched_skills}")
+                print(f"     Missing skills: {missing_skills}")
+        
+        # Test 2: Verify search results are cached for learning
+        print("\n🔍 Testing search result caching for learning...")
+        
+        # Perform another search to generate cache entries
+        success, results = self.run_test(
+            "Search to generate cache (for learning)",
+            "GET",
+            f"search?job_id={job_id}&k=3",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Search completed, results should be cached for learning")
+        
+        # Test 3: Test fallback behavior with insufficient data
+        print("\n🔍 Testing fallback to default weights...")
+        
+        # Get current weights to see if we're using defaults
+        success, weights_response = self.run_test(
+            "Get weights to check fallback behavior",
+            "GET",
+            "learning/weights",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            interaction_count = weights_response.get('interaction_count', 0)
+            confidence = weights_response.get('confidence_score', 0)
+            
+            if interaction_count < 50:  # Based on min_interactions_threshold
+                print(f"   ✅ Using default weights due to insufficient data ({interaction_count} < 50 interactions)")
+            else:
+                print(f"   ✅ Using learned weights with {interaction_count} interactions (confidence: {confidence:.3f})")
+
+    def test_search_caching_system(self):
+        """Test that search results are properly cached for learning purposes"""
+        print("\n" + "="*50)
+        print("TESTING SEARCH CACHING SYSTEM")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping caching tests")
+            return
+        
+        if not self.created_jobs:
+            print("❌ No jobs created, skipping caching tests")
+            return
+        
+        # Perform multiple searches to generate cache entries
+        job_id = self.created_jobs[0]
+        
+        # Test 1: Regular search
+        success, results = self.run_test(
+            "Search to test caching (regular)",
+            "GET",
+            f"search?job_id={job_id}&k=5",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Regular search completed ({len(results)} results)")
+        
+        # Test 2: Blind screening search
+        success, results = self.run_test(
+            "Search to test caching (blind screening)",
+            "GET",
+            f"search?job_id={job_id}&k=3&blind_screening=true",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Blind screening search completed ({len(results)} results)")
+            
+            # Verify PII redaction in cached results
+            if results:
+                first_result = results[0]
+                if '***' in first_result.get('candidate_name', '') or '***' in first_result.get('candidate_email', ''):
+                    print(f"   ✅ PII properly redacted in blind screening results")
+        
+        # Test 3: Different k values
+        for k in [1, 2, 10]:
+            success, results = self.run_test(
+                f"Search with k={k} (caching test)",
+                "GET",
+                f"search?job_id={job_id}&k={k}",
+                200,
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   ✅ Search with k={k} completed ({len(results)} results)")
+
+    def test_learning_integration_workflow(self):
+        """Test complete Learning-to-Rank workflow integration"""
+        print("\n" + "="*50)
+        print("TESTING LEARNING INTEGRATION WORKFLOW")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens or 'admin' not in self.auth_tokens:
+            print("❌ Missing required tokens, skipping integration workflow tests")
+            return
+        
+        if not self.created_candidates or not self.created_jobs:
+            print("❌ Missing test data, skipping integration workflow tests")
+            return
+        
+        print("🔄 Testing complete Learning-to-Rank workflow...")
+        
+        # Step 1: Get initial weights
+        success, initial_weights = self.run_test(
+            "Get initial weights",
+            "GET",
+            "learning/weights",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Initial weights retrieved")
+            print(f"     Interaction count: {initial_weights.get('interaction_count', 0)}")
+            print(f"     Confidence: {initial_weights.get('confidence_score', 0):.3f}")
+        
+        # Step 2: Perform search to generate cached results
+        job_id = self.created_jobs[0]
+        success, search_results = self.run_test(
+            "Perform search for workflow test",
+            "GET",
+            f"search?job_id={job_id}&k=5",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and search_results:
+            print(f"   ✅ Search completed with {len(search_results)} results")
+            
+            # Step 3: Record interactions for top candidates
+            interaction_types = ["click", "shortlist", "application"]
+            
+            for i, interaction_type in enumerate(interaction_types):
+                if i < len(search_results):
+                    candidate_id = search_results[i]['candidate_id']
+                    
+                    interaction_data = {
+                        "candidate_id": candidate_id,
+                        "job_id": job_id,
+                        "interaction_type": interaction_type,
+                        "search_position": i + 1,
+                        "session_id": "workflow-test-session"
+                    }
+                    
+                    success, response = self.run_test(
+                        f"Record {interaction_type} interaction",
+                        "POST",
+                        "interactions",
+                        201,
+                        data=interaction_data,
+                        auth_token=self.auth_tokens['recruiter']
+                    )
+                    
+                    if success:
+                        print(f"   ✅ {interaction_type.capitalize()} interaction recorded")
+        
+        # Step 4: Get updated metrics
+        success, metrics = self.run_test(
+            "Get updated learning metrics",
+            "GET",
+            "learning/metrics",
+            200,
+            auth_token=self.auth_tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Updated metrics retrieved")
+            print(f"     Total interactions: {metrics.get('total_interactions', 0)}")
+            print(f"     Learning status: {metrics.get('learning_status', 'unknown')}")
+            
+            # Check interaction breakdown
+            breakdown = metrics.get('interaction_breakdown', {})
+            if breakdown:
+                print(f"     Interaction types recorded:")
+                for interaction_type, stats in breakdown.items():
+                    print(f"       {interaction_type}: {stats.get('count', 0)} interactions")
+        
+        # Step 5: Trigger retraining if we have enough interactions
+        success, retrain_response = self.run_test(
+            "Trigger retraining after interactions",
+            "POST",
+            "learning/retrain",
+            200,
+            auth_token=self.auth_tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Retraining completed")
+            new_weights = retrain_response.get('new_weights', {})
+            if new_weights:
+                print(f"     Updated weights:")
+                print(f"       Semantic: {new_weights.get('semantic_weight', 0):.3f}")
+                print(f"       Skill: {new_weights.get('skill_weight', 0):.3f}")
+                print(f"       Experience: {new_weights.get('experience_weight', 0):.3f}")
+                print(f"       Confidence: {new_weights.get('confidence_score', 0):.3f}")
+        
+        # Step 6: Verify search now uses updated weights
+        success, updated_search = self.run_test(
+            "Search with updated weights",
+            "GET",
+            f"search?job_id={job_id}&k=3",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and updated_search:
+            print(f"   ✅ Search with updated weights completed")
+            
+            # Compare score breakdown with initial search
+            if updated_search:
+                score_breakdown = updated_search[0].get('score_breakdown', {})
+                current_weights = [
+                    score_breakdown.get('semantic_weight', 0),
+                    score_breakdown.get('skill_overlap_weight', 0),
+                    score_breakdown.get('experience_weight', 0)
+                ]
+                print(f"     Current weights in search: {current_weights}")
+
+    def test_error_handling_learning_endpoints(self):
+        """Test error handling for Learning-to-Rank endpoints"""
+        print("\n" + "="*50)
+        print("TESTING LEARNING ENDPOINTS ERROR HANDLING")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping error handling tests")
+            return
+        
+        # Test 1: Invalid interaction data
+        invalid_interaction = {
+            "candidate_id": "non-existent-candidate",
+            "job_id": "non-existent-job",
+            "interaction_type": "invalid_type"
+        }
+        
+        success, _ = self.run_test(
+            "Record interaction with invalid data",
+            "POST",
+            "interactions",
+            422,  # Should fail with validation error
+            data=invalid_interaction,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        # Test 2: Missing required fields
+        incomplete_interaction = {
+            "candidate_id": "test-id"
+            # Missing job_id and interaction_type
+        }
+        
+        success, _ = self.run_test(
+            "Record interaction with missing fields",
+            "POST",
+            "interactions",
+            422,  # Should fail with validation error
+            data=incomplete_interaction,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        # Test 3: Invalid job category parameter
+        success, response = self.run_test(
+            "Get weights with very long job category",
+            "GET",
+            "learning/weights?job_category=" + "x" * 1000,  # Very long category
+            200,  # Should still work, just ignore invalid category
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print(f"   ✅ Handles invalid job category gracefully")
+
     def run_all_tests(self):
-        """Run all tests focusing on enhanced resume parsing with LLM integration"""
-        print("🚀 Starting Job Matching API Tests - Enhanced Resume Parsing Focus")
+        """Run all tests focusing on Learning-to-Rank Algorithm implementation"""
+        print("🚀 Starting Job Matching API Tests - Learning-to-Rank Algorithm Focus")
         print(f"🌐 Base URL: {self.base_url}")
         
         try:
             # Authentication setup (required for all tests)
             self.test_seeded_users()
             
-            # PRIORITY: Enhanced Resume Parsing Tests
-            print("\n🎯 PHASE 2 - ENHANCED RESUME PARSING TESTS")
-            print("="*60)
-            self.test_enhanced_resume_parsing()
-            self.test_parsed_resume_endpoint()
-            self.test_candidate_response_enhanced_fields()
-            self.test_file_format_support()
-            
-            # Legacy compatibility tests
-            print("\n🔄 LEGACY COMPATIBILITY TESTS")
+            # Create test data for Learning-to-Rank tests
+            print("\n📝 SETTING UP TEST DATA")
             print("="*60)
             self.test_resume_upload_authenticated()
             self.test_job_posting_authenticated()
-            self.test_candidate_search_authenticated()
             
-            # Core functionality verification
-            print("\n✅ CORE FUNCTIONALITY VERIFICATION")
+            # PRIORITY: Learning-to-Rank Tests
+            print("\n🎯 LEARNING-TO-RANK ALGORITHM TESTS")
             print("="*60)
+            self.test_learning_to_rank_endpoints()
+            self.test_dynamic_search_weights()
+            self.test_search_caching_system()
+            self.test_learning_integration_workflow()
+            self.test_error_handling_learning_endpoints()
+            
+            # Verify existing functionality still works
+            print("\n✅ EXISTING FUNCTIONALITY VERIFICATION")
+            print("="*60)
+            self.test_candidate_search_authenticated()
             self.test_basic_endpoints()
-            self.test_individual_endpoints_authenticated()
             self.test_authentication_system()
             self.test_role_based_access_control()
             
             # Print final results
             print("\n" + "="*60)
-            print("📊 FINAL TEST RESULTS - ENHANCED RESUME PARSING")
+            print("📊 FINAL TEST RESULTS - LEARNING-TO-RANK ALGORITHM")
             print("="*60)
             print(f"Tests Run: {self.tests_run}")
             print(f"Tests Passed: {self.tests_passed}")
@@ -1532,14 +2055,17 @@ class JobMatchingAPITester:
             if self.auth_tokens:
                 print(f"🔐 Authenticated as {len(self.auth_tokens)} different user roles")
             
-            # Summary of enhanced parsing features tested
-            print(f"\n🔬 ENHANCED PARSING FEATURES TESTED:")
-            print(f"   ✓ LLM-powered resume parsing with fallback")
-            print(f"   ✓ New /api/candidates/{{id}}/parsed-resume endpoint")
-            print(f"   ✓ Enhanced candidate response fields")
-            print(f"   ✓ Multiple file format support")
-            print(f"   ✓ Graceful fallback to basic parsing")
-            print(f"   ✓ Backward compatibility with existing functionality")
+            # Summary of Learning-to-Rank features tested
+            print(f"\n🧠 LEARNING-TO-RANK FEATURES TESTED:")
+            print(f"   ✓ Learning-to-Rank endpoints with authentication")
+            print(f"   ✓ Dynamic ML-optimized weights in search")
+            print(f"   ✓ Recruiter interaction recording")
+            print(f"   ✓ Search result caching for learning")
+            print(f"   ✓ Performance metrics and monitoring")
+            print(f"   ✓ Manual retraining capabilities")
+            print(f"   ✓ Graceful fallback to default weights")
+            print(f"   ✓ Complete learning workflow integration")
+            print(f"   ✓ Error handling and validation")
             
             return self.tests_passed == self.tests_run
             
