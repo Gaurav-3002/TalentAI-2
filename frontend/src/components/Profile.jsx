@@ -76,6 +76,12 @@ const Profile = () => {
       {role === 'candidate' && (
         <>
           <Section title="Resume & Skills">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle2">Latest Resume</Typography>
+              <Button size="small" variant="contained" onClick={() => window.location.href = '/upload-resume'}>
+                Upload / Update Resume
+              </Button>
+            </Box>
             {data?.candidate_info ? (
               <>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>Skills</Typography>
