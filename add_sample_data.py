@@ -160,7 +160,7 @@ async def add_sample_data():
             # Check if candidate already exists
             existing = await db.candidates.find_one({"email": candidate.email})
             if not existing:
-                await db.candidates.insert_one(candidate.dict())
+                await db.candidates.insert_one(candidate.model_dump())
                 print(f"Added candidate: {candidate.name}")
             else:
                 print(f"Candidate {candidate.name} already exists")
@@ -179,7 +179,7 @@ async def add_sample_data():
             # Check if job already exists
             existing = await db.job_postings.find_one({"title": job.title, "company": job.company})
             if not existing:
-                await db.job_postings.insert_one(job.dict())
+                await db.job_postings.insert_one(job.model_dump())
                 print(f"Added job: {job.title} at {job.company}")
             else:
                 print(f"Job {job.title} at {job.company} already exists")
