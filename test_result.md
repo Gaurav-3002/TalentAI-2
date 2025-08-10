@@ -564,15 +564,18 @@ frontend:
 
   - task: "Create ScoreChart component"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/ScoreChart.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Created bar chart component using Recharts for score visualization"
+      - working: false
+        agent: "testing"
+        comment: "❌ SCORE CHART NOT ACCESSIBLE - Cannot test ScoreChart component due to authentication failures preventing access to candidate search functionality. Component requires recruiter/admin login to access search results where score charts are displayed."
 
   - task: "Create CandidateCard component"
     implemented: true
