@@ -239,6 +239,127 @@ const Dashboard = () => {
             </Box>
           </CardContent>
         </Card>
+      ) : isCandidate() ? (
+        // Candidate-specific dashboard
+        <>
+          {recentJobs.length === 0 ? (
+            <Card elevation={2} sx={{ mb: 4 }}>
+              <CardContent sx={{ py: 8, textAlign: 'center' }}>
+                <Box
+                  component="img"
+                  src="https://customer-assets.emergentagent.com/job_9ed72db7-5d32-4d00-a440-3eb81b39448c/artifacts/xn7kefv8_Top-10-Job-Portals-in-India-That-Makes-Them-Good-min.jpg"
+                  alt="Job Portal"
+                  sx={{
+                    width: '100%',
+                    maxWidth: 400,
+                    height: 'auto',
+                    mb: 3,
+                    borderRadius: 2,
+                  }}
+                />
+                <Typography variant="h4" gutterBottom color="primary.main">
+                  Welcome to Your Career Hub! 🎯
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
+                  Ready to find your next opportunity? Upload your resume and explore job openings that match your skills and experience.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button 
+                    variant="contained" 
+                    size="large" 
+                    onClick={() => window.location.href = '/upload-resume'}
+                  >
+                    📄 Upload Resume
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="large"
+                    onClick={() => window.location.href = '/search'}
+                  >
+                    🔍 Browse Jobs
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card elevation={2} sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Available Jobs
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Explore job opportunities that match your skills and experience.
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  {recentJobs.map((job) => (
+                    <Card key={job.id} variant="outlined" sx={{ mb: 2 }}>
+                      <CardContent sx={{ py: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                          {job.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {job.company} • {job.location}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          {job.description}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                          {job.required_skills.slice(0, 5).map((skill) => (
+                            <Typography
+                              key={skill}
+                              variant="caption"
+                              sx={{
+                                backgroundColor: 'primary.light',
+                                color: 'primary.contrastText',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              {skill}
+                            </Typography>
+                          ))}
+                          {job.required_skills.length > 5 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                backgroundColor: 'grey.200',
+                                color: 'text.secondary',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              +{job.required_skills.length - 5} more
+                            </Typography>
+                          )}
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Button size="small" variant="outlined">
+                            View Details
+                          </Button>
+                          <Button size="small" variant="contained">
+                            Apply Now
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+                <Box sx={{ textAlign: 'center', mt: 3 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => window.location.href = '/search'}
+                  >
+                    View All Jobs
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </>
       ) : isRecruiter() && (
         <>
           {/* Show main empty state if no candidates and no jobs */}
