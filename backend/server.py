@@ -850,6 +850,19 @@ async def seed_initial_users():
             )
             await db.users.insert_one(recruiter_user.dict())
             logger.info("Created default recruiter user: recruiter@jobmatcher.com / recruiter123")
+        
+        # Check if candidate already exists
+        candidate_exists = await db.users.find_one({"email": "candidate@jobmatcher.com"})
+        if not candidate_exists:
+            candidate_user = User(
+                email="candidate@jobmatcher.com",
+                full_name="Default Candidate",
+                role=UserRole.CANDIDATE,
+                hashed_password=get_password_hash("candidate123"),
+                is_verified=True
+            )
+            await db.users.insert_one(candidate_user.dict())
+            logger.info("Created default candidate user: candidate@jobmatcher.com / candidate123")
             
     except Exception as e:
         logger.error(f"Error seeding initial users: {e}")
