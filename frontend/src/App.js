@@ -64,7 +64,27 @@ const Dashboard = () => {
         setRecentCandidates([]);
         setRecentJobs([]);
         setError(null);
+      } else if (isCandidate()) {
+        // For candidates, only show jobs data and their own profile
+        try {
+          const jobsRes = await api.getJobs();
+          setRecentJobs(jobsRes.slice(0, 5));
+          setStats({
+            candidatesCount: 0, // Don't show candidate count to candidates
+            jobsCount: jobsRes.length
+          });
+          setRecentCandidates([]); // Candidates don't see other candidates
+          setError(null);
+        } catch (jobsError) {
+          console.error('Error fetching jobs for candidate:', jobsError);
+          // Even if jobs fail, don't show the error, just show empty state
+          setStats({ candidatesCount: 0, jobsCount: 0 });
+          setRecentJobs([]);
+          setRecentCandidates([]);
+          setError(null);
+        }
       } else {
+        // For recruiters and admins, show full dashboard data
         const data = await api.getDashboardData(false); // Don't use blind mode for dashboard
         setRecentCandidates(data.candidates.slice(0, 5));
         setRecentJobs(data.jobs.slice(0, 5));
