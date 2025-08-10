@@ -1,0 +1,6 @@
+Looking in indexes: https://pypi.org/simple, https://d33sy5i8bnduwe.cloudfront.net/simple/
+Requirement already satisfied: opentelemetry-semantic-conventions in /root/.venv/lib/python3.11/site-packages (0.57b0)
+Requirement already satisfied: opentelemetry-api==1.36.0 in /root/.venv/lib/python3.11/site-packages (from opentelemetry-semantic-conventions) (1.36.0)
+Requirement already satisfied: typing-extensions>=4.5.0 in /usr/local/lib/python3.11/site-packages (from opentelemetry-semantic-conventions) (4.14.1)
+Requirement already satisfied: importlib-metadata<8.8.0,>=6.0 in /root/.venv/lib/python3.11/site-packages (from opentelemetry-api==1.36.0->opentelemetry-semantic-conventions) (8.7.0)
+Requirement already satisfied: zipp>=3.20 in /root/.venv/lib/python3.11/site-packages (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api==1.36.0->opentelemetry-semantic-conventions) (3.23.0)
