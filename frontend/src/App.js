@@ -301,9 +301,154 @@ const ResumeUpload = () => {
       <Card elevation={3}>
         <CardContent sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit}>
-            {/* form fields remain unchanged */}
             <Grid container spacing={3}>
-              {/* form inputs ... keep as before */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Full Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  variant="outlined"
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Upload Resume File"
+                  type="file"
+                  onChange={handleFileChange}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ accept: '.pdf,.docx,.txt' }}
+                  variant="outlined"
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Supported formats: PDF, DOCX, TXT
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Resume Text (if not uploading file)"
+                  name="resumeText"
+                  value={formData.resumeText}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={6}
+                  placeholder="Paste your resume text here..."
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Skills (comma-separated)"
+                  name="skills"
+                  value={formData.skills}
+                  onChange={handleInputChange}
+                  placeholder="JavaScript, Python, React, etc."
+                  variant="outlined"
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Years of Experience"
+                  name="experienceYears"
+                  type="number"
+                  value={formData.experienceYears}
+                  onChange={handleInputChange}
+                  inputProps={{ min: 0, max: 50 }}
+                  variant="outlined"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Education"
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  placeholder="Bachelor's in Computer Science"
+                  variant="outlined"
+                />
+              </Grid>
+
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error">
+                    {error}
+                  </Alert>
+                </Grid>
+              )}
+
+              {success && (
+                <Grid item xs={12}>
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    Resume uploaded successfully! Candidate ID: {success.candidate_id}
+                    <br />
+                    Extracted Skills: {success.extracted_skills?.join(', ')}
+                    <br />
+                    Experience: {success.experience_years} years
+                  </Alert>
+                  {!showQuiz && (
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => setShowQuiz(true)}
+                        disabled={!success.extracted_skills || success.extracted_skills.length === 0}
+                      >
+                        Take Validation Test
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={handleSkipQuiz}
+                      >
+                        Skip and Continue
+                      </Button>
+                    </Box>
+                  )}
+                </Grid>
+              )}
+
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  disabled={loading || (!file && !formData.resumeText)}
+                  sx={{ py: 2, fontSize: '1.1rem' }}
+                >
+                  {loading ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 2 }} />
+                      Processing...
+                    </>
+                  ) : (
+                    'Upload Resume'
+                  )}
+                </Button>
+              </Grid>
             </Grid>
           </Box>
         </CardContent>
