@@ -34,7 +34,8 @@ from models import (
     AccessLog, AccessLogCreate, AccessReason,
     Candidate, CandidateCreate, CandidateResponse,
     JobPosting, JobPostingCreate, MatchResult, SearchRequest,
-    StatusCheck, StatusCheckCreate
+    StatusCheck, StatusCheckCreate,
+    Application, ApplicationCreate, ApplicationWithJob, ApplicationStatus
 )
 
 # File processing imports
@@ -77,6 +78,8 @@ async def create_indexes():
         await db.access_logs.create_index([("candidate_id", 1)])
         await db.access_logs.create_index([("timestamp", -1)])
         await db.access_logs.create_index([("user_id", 1), ("timestamp", -1)])
+        await db.applications.create_index([("candidate_id", 1), ("applied_at", -1)])
+        await db.applications.create_index([("job_id", 1)])
         
     except Exception as e:
         logger.info(f"Index creation info: {e}")
@@ -510,6 +513,111 @@ async def create_access_log(
     except Exception as e:
         logger.error(f"Create access log error: {e}")
         raise HTTPException(status_code=500, detail="Failed to create access log")
+
+# Profile and Applications Routes
+@api_router.get("/profile")
+async def get_profile(current_user: TokenData = Depends(require_any_auth)):
+    """Return profile info for current user including role-specific data"""
+    try:
+        user_doc = await db.users.find_one({"id": current_user.user_id})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = User(**user_doc)
+        base = {
+            "user": UserResponse(**user_doc).dict(),
+            "role": user.role.value
+        }
+        if user.role == UserRole.CANDIDATE:
+            # Latest candidate record created by this user (resume upload)
+            candidate_doc = await db.candidates.find({"created_by": user.id}).sort("created_at", -1).limit(1).to_list(1)
+            candidate_info = None
+            if candidate_doc:
+                c = Candidate(**candidate_doc[0])
+                candidate_info = {
+                    "candidate_id": c.id,
+                    "name": c.name,
+                    "email": c.email,
+                    "skills": c.skills,
+                    "experience_years": c.experience_years,
+                    "education": c.education,
+                    "resume_text": c.resume_text,
+                    "created_at": c.created_at
+                }
+                # Applications for this candidate with job info
+                apps = await db.applications.find({"candidate_id": c.id}).sort("applied_at", -1).to_list(200)
+                enriched = []
+                for a in apps:
+                    job = await db.job_postings.find_one({"id": a["job_id"]})
+                    if job:
+                        enriched.append(ApplicationWithJob(
+                            id=a["id"],
+                            job_id=a["job_id"],
+                            job_title=job["title"],
+                            company=job["company"],
+                            status=a.get("status", "applied"),
+                            applied_at=a.get("applied_at")
+                        ).dict())
+                base["applications"] = enriched
+            base["candidate_info"] = candidate_info
+            return base
+        elif user.role == UserRole.RECRUITER:
+            jobs = await db.job_postings.find({"created_by": user.id}).sort("created_at", -1).to_list(500)
+            base["recruiter_info"] = {
+                "jobs_count": len(jobs),
+                "jobs": [{"id": j["id"], "title": j["title"], "company": j["company"], "created_at": j["created_at"]} for j in jobs]
+            }
+            return base
+        else:  # ADMIN
+            total_users = await db.users.count_documents({})
+            counts = {
+                "admin": await db.users.count_documents({"role": "admin"}),
+                "recruiter": await db.users.count_documents({"role": "recruiter"}),
+                "candidate": await db.users.count_documents({"role": "candidate"})
+            }
+            jobs_count = await db.job_postings.count_documents({})
+            candidates_count = await db.candidates.count_documents({})
+            base["admin_info"] = {
+                "users_count": total_users,
+                "counts_by_role": counts,
+                "jobs_count": jobs_count,
+                "candidates_count": candidates_count
+            }
+            return base
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get profile error: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Failed to get profile")
+
+@api_router.post("/applications", response_model=Application)
+async def create_application(data: ApplicationCreate, current_user: TokenData = Depends(require_any_auth)):
+    """Create an application for the current candidate user to a job"""
+    try:
+        # Only candidate can apply
+        if current_user.role != UserRole.CANDIDATE:
+            raise HTTPException(status_code=403, detail="Only candidates can apply to jobs")
+        # Find latest candidate profile belonging to user
+        candidate_doc = await db.candidates.find({"created_by": current_user.user_id}).sort("created_at", -1).limit(1).to_list(1)
+        if not candidate_doc:
+            raise HTTPException(status_code=400, detail="Please upload your resume before applying")
+        c = Candidate(**candidate_doc[0])
+        # Validate job exists
+        job = await db.job_postings.find_one({"id": data.job_id})
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        # Prevent duplicate application
+        existing = await db.applications.find_one({"candidate_id": c.id, "job_id": data.job_id})
+        if existing:
+            return Application(**existing)
+        app_obj = Application(candidate_id=c.id, job_id=data.job_id)
+        await db.applications.insert_one(app_obj.dict())
+        return app_obj
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Create application error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create application")
 
 # API Routes
 @api_router.get("/")

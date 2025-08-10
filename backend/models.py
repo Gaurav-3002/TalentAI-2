@@ -158,6 +158,31 @@ class JobPostingCreate(BaseModel):
     description: str
     min_experience_years: Optional[int] = 0
 
+# Applications Models
+class ApplicationStatus(str, Enum):
+    APPLIED = "applied"
+    REVIEWING = "reviewing"
+    REJECTED = "rejected"
+    ACCEPTED = "accepted"
+
+class Application(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    candidate_id: str
+    job_id: str
+    status: ApplicationStatus = ApplicationStatus.APPLIED
+    applied_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ApplicationCreate(BaseModel):
+    job_id: str
+
+class ApplicationWithJob(BaseModel):
+    id: str
+    job_id: str
+    job_title: str
+    company: str
+    status: ApplicationStatus
+    applied_at: datetime
+
 # Enhanced Match Result Models
 class MatchResult(BaseModel):
     candidate_id: str
@@ -199,8 +224,8 @@ class MatchResult(BaseModel):
                 candidate_experience_years=candidate.experience_years,
                 total_score=total_score,
                 semantic_score=semantic_score,
-                skill_overlap_score=skill_overlap_score,
-                experience_match_score=experience_match_score,
+                skill_overlap_score=skill_overlap,
+                experience_match_score=experience_match,
                 score_breakdown=score_breakdown
             )
         else:
@@ -212,8 +237,8 @@ class MatchResult(BaseModel):
                 candidate_experience_years=candidate.experience_years,
                 total_score=total_score,
                 semantic_score=semantic_score,
-                skill_overlap_score=skill_overlap_score,
-                experience_match_score=experience_match_score,
+                skill_overlap_score=skill_overlap,
+                experience_match_score=experience_match,
                 score_breakdown=score_breakdown
             )
 

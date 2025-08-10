@@ -61,6 +61,18 @@ export const api = {
     return response.data;
   },
 
+  // Profile APIs
+  async getProfile() {
+    const response = await apiClient.get('/profile');
+    return response.data;
+  },
+
+  // Applications
+  async applyToJob(jobId) {
+    const response = await apiClient.post('/applications', { job_id: jobId });
+    return response.data;
+  },
+
   // User Management APIs
   async getAllUsers() {
     const response = await apiClient.get('/users');
