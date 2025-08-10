@@ -653,6 +653,19 @@ async def upload_resume(
         
         # Store in database
         await db.candidates.insert_one(candidate.dict())
+
+        # Upsert into FAISS
+        try:
+            faiss = getattr(app.state, "faiss", None)
+            if faiss and candidate.embedding:
+                import numpy as np
+                await faiss.add_vectors(
+                    np.array([candidate.embedding], dtype=float),
+                    [{"type": "candidate", "candidate_id": candidate.id, "name": candidate.name, "email": candidate.email}]
+                )
+                await faiss.save()
+        except Exception as e:
+            logger.error(f"FAISS add candidate failed: {e}")
         
         return {
             "message": "Resume processed successfully",
