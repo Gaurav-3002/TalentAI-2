@@ -363,17 +363,412 @@ class JobMatchingAPITester:
                 auth_token=self.auth_tokens['candidate']
             )
 
-    def test_resume_upload_authenticated(self):
-        """Test resume upload with proper authentication"""
+    def test_enhanced_resume_parsing(self):
+        """Test enhanced resume parsing with LLM integration and fallback behavior"""
         print("\n" + "="*50)
-        print("TESTING AUTHENTICATED RESUME UPLOAD")
+        print("TESTING ENHANCED RESUME PARSING WITH LLM INTEGRATION")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping enhanced resume parsing tests")
+            return
+        
+        # Test case 1: Text-based resume upload (should attempt LLM parsing first)
+        resume_data = {
+            'name': 'Dr. Sarah Chen',
+            'email': 'sarah.chen@techcorp.com',
+            'resume_text': '''
+            SARAH CHEN, PhD
+            Email: sarah.chen@techcorp.com | Phone: (555) 123-4567 | LinkedIn: linkedin.com/in/sarahchen
+            
+            PROFESSIONAL SUMMARY
+            Senior Machine Learning Engineer with 8+ years of experience in developing AI solutions for enterprise applications. 
+            Expert in deep learning, natural language processing, and computer vision. Published researcher with 15+ papers.
+            
+            TECHNICAL SKILLS
+            Programming: Python, R, Java, C++, JavaScript
+            ML/AI: TensorFlow, PyTorch, scikit-learn, Keras, OpenCV
+            Cloud: AWS, Google Cloud, Azure, Docker, Kubernetes
+            Databases: PostgreSQL, MongoDB, Redis
+            
+            WORK EXPERIENCE
+            Senior ML Engineer | TechCorp Inc. | 2020-Present
+            • Led development of recommendation system serving 10M+ users
+            • Improved model accuracy by 25% using advanced deep learning techniques
+            • Mentored team of 5 junior engineers
+            
+            ML Research Scientist | AI Labs | 2018-2020
+            • Developed novel NLP algorithms for sentiment analysis
+            • Published 8 papers in top-tier conferences (NIPS, ICML)
+            • Collaborated with cross-functional teams on product integration
+            
+            EDUCATION
+            PhD in Computer Science | Stanford University | 2018
+            MS in Machine Learning | MIT | 2015
+            BS in Computer Science | UC Berkeley | 2013
+            
+            PROJECTS
+            • AutoML Platform: Built end-to-end ML pipeline automation tool
+            • Medical Image Analysis: Developed CNN for cancer detection (95% accuracy)
+            • Chatbot Framework: Created conversational AI for customer service
+            
+            CERTIFICATIONS
+            • AWS Certified Machine Learning - Specialty (2022)
+            • Google Cloud Professional ML Engineer (2021)
+            • TensorFlow Developer Certificate (2020)
+            ''',
+            'skills': 'Python, TensorFlow, PyTorch, Machine Learning, Deep Learning, NLP, Computer Vision, AWS',
+            'experience_years': 8,
+            'education': "PhD in Computer Science from Stanford University"
+        }
+        
+        success, response = self.run_test(
+            "Enhanced resume parsing - comprehensive text resume", 
+            "POST", 
+            "resume", 
+            200, 
+            data=resume_data,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'candidate_id' in response:
+            self.created_candidates.append(response['candidate_id'])
+            print(f"   ✅ Resume processed successfully")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
+            print(f"   Parsing confidence: {response.get('parsing_confidence', 'N/A')}")
+            print(f"   Advanced parsing available: {response.get('advanced_parsing_available', False)}")
+            print(f"   Extracted skills: {response.get('extracted_skills', [])}")
+            print(f"   Experience years: {response.get('experience_years', 0)}")
+            
+            # Verify expected fields in response
+            expected_fields = ['parsing_method', 'candidate_id', 'extracted_skills', 'experience_years']
+            for field in expected_fields:
+                if field in response:
+                    print(f"   ✅ Field '{field}' present in response")
+                else:
+                    print(f"   ❌ Field '{field}' missing from response")
+            
+            # Check if structured data is available
+            if response.get('advanced_parsing_available'):
+                structured_data = response.get('structured_data', {})
+                if structured_data:
+                    print(f"   ✅ Structured data available:")
+                    print(f"      Personal info: {structured_data.get('personal_info') is not None}")
+                    print(f"      Work experience count: {structured_data.get('work_experience_count', 0)}")
+                    print(f"      Education count: {structured_data.get('education_count', 0)}")
+                    print(f"      Projects count: {structured_data.get('projects_count', 0)}")
+                    print(f"      Certifications count: {structured_data.get('certifications_count', 0)}")
+        
+        # Test case 2: Simple resume (should work with basic parsing as fallback)
+        simple_resume_data = {
+            'name': 'John Developer',
+            'email': 'john.dev@example.com',
+            'resume_text': '''
+            John Developer
+            Software Engineer with 3 years experience in JavaScript and React.
+            Worked at StartupCorp building web applications.
+            Bachelor's degree in Computer Science.
+            ''',
+            'skills': 'JavaScript, React, HTML, CSS',
+            'experience_years': 3,
+            'education': "Bachelor's in Computer Science"
+        }
+        
+        success, response = self.run_test(
+            "Enhanced resume parsing - simple text resume", 
+            "POST", 
+            "resume", 
+            200, 
+            data=simple_resume_data,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'candidate_id' in response:
+            self.created_candidates.append(response['candidate_id'])
+            print(f"   ✅ Simple resume processed")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
+            
+            # Since GEMINI_API_KEY is placeholder, should fall back to basic parsing
+            if response.get('parsing_method') == 'basic':
+                print(f"   ✅ Correctly fell back to basic parsing (expected with placeholder API key)")
+            elif response.get('parsing_method') in ['llm_text', 'llm_advanced']:
+                print(f"   ⚠️  Advanced parsing succeeded (unexpected with placeholder key)")
+        
+        # Test case 3: File upload simulation (PDF/DOCX would be tested here in real scenario)
+        # Since we can't easily create binary files in this test, we'll simulate with text
+        file_like_data = {
+            'name': 'Maria Rodriguez',
+            'email': 'maria.rodriguez@company.com',
+            'resume_text': '''
+            MARIA RODRIGUEZ
+            Senior Frontend Developer
+            
+            CONTACT
+            Email: maria.rodriguez@company.com
+            Phone: (555) 987-6543
+            Location: San Francisco, CA
+            
+            EXPERIENCE
+            Senior Frontend Developer | WebTech Solutions | 2019-Present
+            • Developed responsive web applications using React and TypeScript
+            • Led UI/UX improvements resulting in 40% increase in user engagement
+            • Mentored 3 junior developers
+            
+            Frontend Developer | DigitalCorp | 2017-2019
+            • Built interactive dashboards using Vue.js and D3.js
+            • Implemented automated testing with Jest and Cypress
+            
+            SKILLS
+            Frontend: React, Vue.js, TypeScript, JavaScript, HTML5, CSS3, SASS
+            Testing: Jest, Cypress, React Testing Library
+            Tools: Webpack, Vite, Git, Figma
+            
+            EDUCATION
+            Bachelor of Science in Web Development | Tech University | 2017
+            ''',
+            'skills': 'React, Vue.js, TypeScript, JavaScript, HTML, CSS, Frontend Development',
+            'experience_years': 6,
+            'education': "Bachelor's in Web Development"
+        }
+        
+        success, response = self.run_test(
+            "Enhanced resume parsing - structured resume format", 
+            "POST", 
+            "resume", 
+            200, 
+            data=file_like_data,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and 'candidate_id' in response:
+            self.created_candidates.append(response['candidate_id'])
+            print(f"   ✅ Structured resume processed")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
+
+    def test_parsed_resume_endpoint(self):
+        """Test the new /api/candidates/{id}/parsed-resume endpoint"""
+        print("\n" + "="*50)
+        print("TESTING PARSED RESUME ENDPOINT")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping parsed resume endpoint tests")
+            return
+        
+        if not self.created_candidates:
+            print("❌ No candidates created, skipping parsed resume endpoint tests")
+            return
+        
+        # Test retrieving parsed resume data for each created candidate
+        for i, candidate_id in enumerate(self.created_candidates[:3]):  # Test first 3 candidates
+            success, response = self.run_test(
+                f"Get parsed resume data - Candidate {i+1}",
+                "GET",
+                f"candidates/{candidate_id}/parsed-resume",
+                200,  # Should succeed if candidate has parsed data, 404 if not
+                auth_token=self.auth_tokens['recruiter']
+            )
+            
+            if success:
+                print(f"   ✅ Parsed resume data retrieved for candidate {i+1}")
+                # Verify structure of parsed resume data
+                expected_fields = ['personal_info', 'summary', 'skills', 'work_experience', 'education']
+                for field in expected_fields:
+                    if field in response:
+                        print(f"      ✅ Field '{field}' present")
+                    else:
+                        print(f"      ⚠️  Field '{field}' missing")
+                
+                # Check parsing metadata
+                if 'parsing_confidence' in response:
+                    print(f"      Parsing confidence: {response['parsing_confidence']}")
+                if 'parsing_method' in response:
+                    print(f"      Parsing method: {response['parsing_method']}")
+            else:
+                print(f"   ⚠️  No parsed resume data available for candidate {i+1} (expected if basic parsing was used)")
+        
+        # Test with non-existent candidate ID
+        success, _ = self.run_test(
+            "Get parsed resume data - Non-existent candidate",
+            "GET",
+            "candidates/non-existent-id/parsed-resume",
+            404,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print("   ✅ Correctly returns 404 for non-existent candidate")
+
+    def test_candidate_response_enhanced_fields(self):
+        """Test that candidate responses include new enhanced fields"""
+        print("\n" + "="*50)
+        print("TESTING ENHANCED CANDIDATE RESPONSE FIELDS")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping enhanced fields tests")
+            return
+        
+        if not self.created_candidates:
+            print("❌ No candidates created, skipping enhanced fields tests")
+            return
+        
+        # Test individual candidate endpoint
+        candidate_id = self.created_candidates[0]
+        success, response = self.run_test(
+            "Get individual candidate - check enhanced fields",
+            "GET",
+            f"candidates/{candidate_id}",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print("   ✅ Individual candidate retrieved")
+            # Check for new enhanced fields
+            enhanced_fields = ['parsing_method', 'parsing_confidence', 'has_structured_data']
+            for field in enhanced_fields:
+                if field in response:
+                    print(f"      ✅ Enhanced field '{field}': {response[field]}")
+                else:
+                    print(f"      ❌ Enhanced field '{field}' missing")
+        
+        # Test candidates list endpoint
+        success, candidates_list = self.run_test(
+            "Get candidates list - check enhanced fields",
+            "GET",
+            "candidates",
+            200,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success and candidates_list:
+            print(f"   ✅ Candidates list retrieved ({len(candidates_list)} candidates)")
+            # Check first candidate for enhanced fields
+            first_candidate = candidates_list[0]
+            enhanced_fields = ['parsing_method', 'parsing_confidence', 'has_structured_data']
+            for field in enhanced_fields:
+                if field in first_candidate:
+                    print(f"      ✅ Enhanced field '{field}': {first_candidate[field]}")
+                else:
+                    print(f"      ❌ Enhanced field '{field}' missing")
+
+    def test_file_format_support(self):
+        """Test different file format support (simulated)"""
+        print("\n" + "="*50)
+        print("TESTING FILE FORMAT SUPPORT")
+        print("="*50)
+        
+        if 'recruiter' not in self.auth_tokens:
+            print("❌ No recruiter token available, skipping file format tests")
+            return
+        
+        # Since we can't easily create actual binary files in this test environment,
+        # we'll test the text-based approach and verify the system handles different scenarios
+        
+        # Test case 1: Resume with minimal information (edge case)
+        minimal_resume = {
+            'name': 'Min Test',
+            'email': 'min.test@example.com',
+            'resume_text': 'Software developer with Python experience.',
+            'skills': 'Python',
+            'experience_years': 1,
+            'education': ''
+        }
+        
+        success, response = self.run_test(
+            "File format test - minimal resume content",
+            "POST",
+            "resume",
+            200,
+            data=minimal_resume,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print("   ✅ Minimal resume processed successfully")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
+            if 'candidate_id' in response:
+                self.created_candidates.append(response['candidate_id'])
+        
+        # Test case 2: Resume with rich formatting (simulated)
+        rich_resume = {
+            'name': 'Rich Format Test',
+            'email': 'rich.test@example.com',
+            'resume_text': '''
+            ═══════════════════════════════════════
+            RICH FORMAT TEST - SENIOR DEVELOPER
+            ═══════════════════════════════════════
+            
+            📧 rich.test@example.com | 📱 (555) 123-4567
+            🌐 github.com/richtest | 💼 linkedin.com/in/richtest
+            
+            ▓▓▓ PROFESSIONAL SUMMARY ▓▓▓
+            Experienced full-stack developer with expertise in:
+            • Modern web technologies (React, Node.js, TypeScript)
+            • Cloud platforms (AWS, Docker, Kubernetes)
+            • Database systems (PostgreSQL, MongoDB, Redis)
+            
+            ▓▓▓ TECHNICAL EXPERTISE ▓▓▓
+            Languages: JavaScript, TypeScript, Python, Java, Go
+            Frontend: React, Vue.js, Angular, HTML5, CSS3, SASS
+            Backend: Node.js, Express, FastAPI, Spring Boot
+            Databases: PostgreSQL, MongoDB, MySQL, Redis
+            Cloud: AWS, Google Cloud, Docker, Kubernetes
+            
+            ▓▓▓ PROFESSIONAL EXPERIENCE ▓▓▓
+            
+            🏢 SENIOR FULL STACK DEVELOPER | TechCorp | 2020-Present
+            ✓ Architected microservices handling 1M+ daily requests
+            ✓ Led team of 6 developers in agile environment
+            ✓ Reduced system latency by 60% through optimization
+            
+            🏢 SOFTWARE ENGINEER | StartupXYZ | 2018-2020
+            ✓ Built responsive web applications using React/Redux
+            ✓ Implemented CI/CD pipelines reducing deployment time by 80%
+            ✓ Mentored junior developers and conducted code reviews
+            
+            ▓▓▓ EDUCATION & CERTIFICATIONS ▓▓▓
+            🎓 Master of Science in Computer Science | Tech University | 2018
+            🏆 AWS Certified Solutions Architect (2022)
+            🏆 Google Cloud Professional Developer (2021)
+            ''',
+            'skills': 'JavaScript, TypeScript, React, Node.js, Python, AWS, Docker, Kubernetes',
+            'experience_years': 6,
+            'education': "Master's in Computer Science"
+        }
+        
+        success, response = self.run_test(
+            "File format test - rich formatted resume",
+            "POST",
+            "resume",
+            200,
+            data=rich_resume,
+            form_data=True,
+            auth_token=self.auth_tokens['recruiter']
+        )
+        
+        if success:
+            print("   ✅ Rich formatted resume processed successfully")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
+            if 'candidate_id' in response:
+                self.created_candidates.append(response['candidate_id'])
+
+    def test_resume_upload_authenticated(self):
+        """Test resume upload with proper authentication (legacy compatibility)"""
+        print("\n" + "="*50)
+        print("TESTING AUTHENTICATED RESUME UPLOAD (LEGACY)")
         print("="*50)
         
         if 'recruiter' not in self.auth_tokens:
             print("❌ No recruiter token available, skipping authenticated resume tests")
             return
         
-        # Test case 1: High-skill candidate
+        # Test case 1: High-skill candidate (legacy format)
         resume_data = {
             'name': 'Alice Johnson',
             'email': 'alice.johnson@example.com',
@@ -388,7 +783,7 @@ class JobMatchingAPITester:
         }
         
         success, response = self.run_test(
-            "Upload high-skill resume (authenticated)", 
+            "Upload high-skill resume (legacy format)", 
             "POST", 
             "resume", 
             200, 
@@ -401,8 +796,9 @@ class JobMatchingAPITester:
             self.created_candidates.append(response['candidate_id'])
             print(f"   Extracted skills: {response.get('extracted_skills', [])}")
             print(f"   Experience years: {response.get('experience_years', 0)}")
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
         
-        # Test case 2: Marketing candidate
+        # Test case 2: Marketing candidate (legacy format)
         resume_data_marketing = {
             'name': 'Bob Smith',
             'email': 'bob.smith@example.com',
@@ -417,7 +813,7 @@ class JobMatchingAPITester:
         }
         
         success, response = self.run_test(
-            "Upload marketing resume (authenticated)", 
+            "Upload marketing resume (legacy format)", 
             "POST", 
             "resume", 
             200, 
@@ -428,6 +824,7 @@ class JobMatchingAPITester:
         
         if success and 'candidate_id' in response:
             self.created_candidates.append(response['candidate_id'])
+            print(f"   Parsing method: {response.get('parsing_method', 'unknown')}")
 
     def test_job_posting_authenticated(self):
         """Test job posting creation with proper authentication"""
