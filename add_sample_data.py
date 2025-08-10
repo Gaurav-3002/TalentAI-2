@@ -61,7 +61,8 @@ async def add_sample_data():
             "education": "Bachelor's in Information Technology",
             "resume_text": "Full-stack Java developer with strong background in enterprise applications and microservices architecture.",
             "parsing_method": "basic",
-            "parsing_confidence": None
+            "parsing_confidence": None,
+            "created_by": "admin"
         },
         {
             "name": "David Wilson",
