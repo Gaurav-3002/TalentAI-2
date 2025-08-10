@@ -660,12 +660,18 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Learning-to-Rank Algorithm implementation"
-    - "Learning-to-Rank endpoints"
-    - "Dynamic search weight optimization"
-  stuck_tasks: []
+    - "Authentication system critical failures"
+    - "Backend API authentication endpoints"
+    - "Frontend-backend integration issues"
+  stuck_tasks:
+    - "Create validation quiz system"
+    - "Create ScoreChart component"
+    - "Create CandidateCard component"
+    - "Create CandidateList component"
+    - "Create JobForm component"
+    - "Create ValidationQuiz component"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
 agent_communication:
   - agent: "main"
