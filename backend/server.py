@@ -35,7 +35,10 @@ from models import (
     Candidate, CandidateCreate, CandidateResponse, ParsedResumeData,
     JobPosting, JobPostingCreate, MatchResult, SearchRequest,
     StatusCheck, StatusCheckCreate,
-    Application, ApplicationCreate, ApplicationWithJob, ApplicationStatus
+    Application, ApplicationCreate, ApplicationWithJob, ApplicationStatus,
+    # Learning-to-Rank models
+    RecruiterInteraction, InteractionCreate, InteractionType,
+    LearningWeights, WeightsUpdate
 )
 
 # File processing imports
