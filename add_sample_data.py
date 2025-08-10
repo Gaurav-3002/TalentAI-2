@@ -83,7 +83,8 @@ async def add_sample_data():
             "education": "PhD in Data Science",
             "resume_text": "Data scientist with extensive experience in machine learning, statistical analysis, and predictive modeling.",
             "parsing_method": "basic",
-            "parsing_confidence": None
+            "parsing_confidence": None,
+            "created_by": "admin"
         }
     ]
     
