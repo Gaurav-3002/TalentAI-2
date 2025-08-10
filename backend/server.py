@@ -987,7 +987,37 @@ async def search_candidates(
         
         # Sort by total score and return top k
         matches.sort(key=lambda x: x.total_score, reverse=True)
-        return matches[:k]
+        top_matches = matches[:k]
+        
+        # Cache search results for learning purposes
+        try:
+            cache_results = []
+            for i, match in enumerate(top_matches):
+                cache_results.append({
+                    'position': i + 1,
+                    'candidate_id': match.candidate_id,
+                    'semantic_score': match.semantic_score,
+                    'skill_overlap_score': match.skill_overlap_score,
+                    'experience_match_score': match.experience_match_score,
+                    'total_score': match.total_score
+                })
+            
+            search_cache_doc = {
+                'recruiter_id': current_user.user_id,
+                'job_id': job_id,
+                'timestamp': datetime.utcnow(),
+                'results': cache_results,
+                'weights_used': weights,
+                'blind_screening': blind_screening
+            }
+            
+            await db.search_cache.insert_one(search_cache_doc)
+            logger.info(f"Cached search results for learning: {len(cache_results)} candidates")
+            
+        except Exception as e:
+            logger.warning(f"Failed to cache search results: {e}")  # Non-critical error
+        
+        return top_matches
         
     except Exception as e:
         logger.error(f"Search error: {e}")
