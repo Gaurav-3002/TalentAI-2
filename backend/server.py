@@ -634,6 +634,8 @@ async def get_status_checks():
     return [StatusCheck(**status_check) for status_check in status_checks]
 
 @api_router.post("/resume")
+@monitor_endpoint("resume_upload", "POST")
+@monitor_resume_processing()
 async def upload_resume(
     file: Optional[UploadFile] = File(None),
     name: str = Form(...),
