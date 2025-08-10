@@ -224,8 +224,8 @@ class MatchResult(BaseModel):
                 candidate_experience_years=candidate.experience_years,
                 total_score=total_score,
                 semantic_score=semantic_score,
-                skill_overlap_score=skill_overlap,
-                experience_match_score=experience_match,
+                skill_overlap_score=skill_overlap_score,
+                experience_match_score=experience_match_score,
                 score_breakdown=score_breakdown
             )
         else:
