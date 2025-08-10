@@ -39,7 +39,8 @@ async def add_sample_data():
             "education": "Bachelor's in Computer Science",
             "resume_text": "Experienced frontend developer with 5 years in React and JavaScript. Built scalable web applications using modern frameworks.",
             "parsing_method": "basic",
-            "parsing_confidence": None
+            "parsing_confidence": None,
+            "created_by": "admin"
         },
         {
             "name": "Bob Smith",
