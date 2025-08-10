@@ -390,7 +390,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Vector DB & embeddings (Emergent LLM + FAISS)"
     - "Authentication system (register/login/JWT)"
     - "Role-based access control"
     - "User management endpoints"
