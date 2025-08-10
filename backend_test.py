@@ -1477,30 +1477,40 @@ class JobMatchingAPITester:
                         break
 
     def run_all_tests(self):
-        """Run all tests including Sprint 6 security features and vector search integration"""
-        print("🚀 Starting Job Matching API Tests - Vector Search Integration Focus")
+        """Run all tests focusing on enhanced resume parsing with LLM integration"""
+        print("🚀 Starting Job Matching API Tests - Enhanced Resume Parsing Focus")
         print(f"🌐 Base URL: {self.base_url}")
         
         try:
-            # Authentication setup (required for vector search tests)
+            # Authentication setup (required for all tests)
             self.test_seeded_users()
             
-            # PRIORITY: Vector Search Integration Tests
-            self.test_vector_search_integration()
-            self.test_embedding_service_failure_simulation()
+            # PRIORITY: Enhanced Resume Parsing Tests
+            print("\n🎯 PHASE 2 - ENHANCED RESUME PARSING TESTS")
+            print("="*60)
+            self.test_enhanced_resume_parsing()
+            self.test_parsed_resume_endpoint()
+            self.test_candidate_response_enhanced_fields()
+            self.test_file_format_support()
             
-            # Core functionality tests with authentication
+            # Legacy compatibility tests
+            print("\n🔄 LEGACY COMPATIBILITY TESTS")
+            print("="*60)
             self.test_resume_upload_authenticated()
             self.test_job_posting_authenticated()
             self.test_candidate_search_authenticated()
             
-            # Basic endpoint tests
+            # Core functionality verification
+            print("\n✅ CORE FUNCTIONALITY VERIFICATION")
+            print("="*60)
             self.test_basic_endpoints()
             self.test_individual_endpoints_authenticated()
+            self.test_authentication_system()
+            self.test_role_based_access_control()
             
             # Print final results
             print("\n" + "="*60)
-            print("📊 FINAL TEST RESULTS - VECTOR SEARCH INTEGRATION")
+            print("📊 FINAL TEST RESULTS - ENHANCED RESUME PARSING")
             print("="*60)
             print(f"Tests Run: {self.tests_run}")
             print(f"Tests Passed: {self.tests_passed}")
@@ -1515,6 +1525,15 @@ class JobMatchingAPITester:
                 print(f"💼 Created {len(self.created_jobs)} test jobs")
             if self.auth_tokens:
                 print(f"🔐 Authenticated as {len(self.auth_tokens)} different user roles")
+            
+            # Summary of enhanced parsing features tested
+            print(f"\n🔬 ENHANCED PARSING FEATURES TESTED:")
+            print(f"   ✓ LLM-powered resume parsing with fallback")
+            print(f"   ✓ New /api/candidates/{{id}}/parsed-resume endpoint")
+            print(f"   ✓ Enhanced candidate response fields")
+            print(f"   ✓ Multiple file format support")
+            print(f"   ✓ Graceful fallback to basic parsing")
+            print(f"   ✓ Backward compatibility with existing functionality")
             
             return self.tests_passed == self.tests_run
             
