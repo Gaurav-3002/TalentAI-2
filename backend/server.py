@@ -1083,6 +1083,132 @@ async def get_job_posting(
         logger.error(f"Get job error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get job")
 
+# Learning-to-Rank Endpoints
+@api_router.post("/interactions", status_code=201)
+async def record_recruiter_interaction(
+    interaction: InteractionCreate,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Record a recruiter interaction for learning purposes"""
+    try:
+        learning_engine = getattr(app.state, "learning_engine", None)
+        if not learning_engine:
+            raise HTTPException(status_code=500, detail="Learning engine not available")
+        
+        # Get the original search scores if available (for more accurate learning)
+        search_scores = {}
+        if interaction.interaction_type in [InteractionType.CLICK, InteractionType.SHORTLIST]:
+            # Try to get recent search results to capture original scores
+            recent_searches = await db.search_cache.find({
+                'recruiter_id': current_user.user_id,
+                'job_id': interaction.job_id,
+                'timestamp': {'$gte': datetime.utcnow() - timedelta(minutes=30)}
+            }).sort('timestamp', -1).limit(1).to_list(1)
+            
+            if recent_searches:
+                search_result = recent_searches[0]
+                # Find the candidate in the search results
+                for result in search_result.get('results', []):
+                    if result.get('candidate_id') == interaction.candidate_id:
+                        search_scores = {
+                            'semantic_score': result.get('semantic_score'),
+                            'skill_overlap_score': result.get('skill_overlap_score'),
+                            'experience_match_score': result.get('experience_match_score'),
+                            'total_score': result.get('total_score')
+                        }
+                        break
+        
+        # Create detailed interaction record
+        detailed_interaction = RecruiterInteraction(
+            recruiter_id=current_user.user_id,
+            candidate_id=interaction.candidate_id,
+            job_id=interaction.job_id,
+            interaction_type=interaction.interaction_type,
+            search_position=interaction.search_position,
+            session_id=interaction.session_id,
+            semantic_score=search_scores.get('semantic_score'),
+            skill_overlap_score=search_scores.get('skill_overlap_score'),
+            experience_match_score=search_scores.get('experience_match_score'),
+            original_score=search_scores.get('total_score')
+        )
+        
+        success = await learning_engine.record_interaction(detailed_interaction)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to record interaction")
+        
+        return {"message": "Interaction recorded successfully", "interaction_id": detailed_interaction.id}
+        
+    except Exception as e:
+        logger.error(f"Failed to record interaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to record interaction: {str(e)}")
+
+@api_router.get("/learning/weights", response_model=LearningWeights)
+async def get_current_weights(
+    job_category: Optional[str] = None,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Get current optimal weights for the Learning-to-Rank algorithm"""
+    try:
+        learning_engine = getattr(app.state, "learning_engine", None)
+        if not learning_engine:
+            raise HTTPException(status_code=500, detail="Learning engine not available")
+        
+        weights = await learning_engine.get_optimal_weights(
+            job_category=job_category,
+            recruiter_id=current_user.user_id
+        )
+        
+        return weights
+        
+    except Exception as e:
+        logger.error(f"Failed to get weights: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get weights: {str(e)}")
+
+@api_router.get("/learning/metrics")
+async def get_learning_metrics(
+    current_user: TokenData = Depends(require_admin)
+):
+    """Get performance metrics of the Learning-to-Rank system (admin only)"""
+    try:
+        learning_engine = getattr(app.state, "learning_engine", None)
+        if not learning_engine:
+            raise HTTPException(status_code=500, detail="Learning engine not available")
+        
+        metrics = await learning_engine.get_performance_metrics()
+        return metrics
+        
+    except Exception as e:
+        logger.error(f"Failed to get learning metrics: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get metrics: {str(e)}")
+
+@api_router.post("/learning/retrain")
+async def trigger_retrain(
+    current_user: TokenData = Depends(require_admin)
+):
+    """Manually trigger retraining of the Learning-to-Rank algorithm (admin only)"""
+    try:
+        learning_engine = getattr(app.state, "learning_engine", None)
+        if not learning_engine:
+            raise HTTPException(status_code=500, detail="Learning engine not available")
+        
+        # Force retraining by getting new optimal weights
+        weights = await learning_engine.get_optimal_weights()
+        
+        return {
+            "message": "Retraining completed successfully",
+            "new_weights": {
+                "semantic_weight": weights.semantic_weight,
+                "skill_weight": weights.skill_weight,
+                "experience_weight": weights.experience_weight,
+                "confidence_score": weights.confidence_score,
+                "interaction_count": weights.interaction_count
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to trigger retrain: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrain: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
