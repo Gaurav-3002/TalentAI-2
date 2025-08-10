@@ -230,7 +230,7 @@ const AccessLogs = () => {
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <Box
                           component="img"
-                          src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/zn9xfw7g_166.png"
+                          src="/empty-states/no-logs.png"
                           alt="No logs"
                           sx={{
                             width: '100%',
