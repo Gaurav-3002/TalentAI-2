@@ -387,3 +387,69 @@ class WeightsUpdate(BaseModel):
     semantic_weight: Optional[float] = None
     skill_weight: Optional[float] = None  
     experience_weight: Optional[float] = None
+
+# Async Task Status Models
+class TaskStatus(str, Enum):
+    PENDING = "pending"
+    STARTED = "started"
+    PROGRESS = "progress"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    RETRY = "retry"
+    REVOKED = "revoked"
+
+class TaskType(str, Enum):
+    RESUME_PROCESSING = "resume_processing"
+    EMBEDDING_GENERATION = "embedding_generation"
+    FAISS_UPDATE = "faiss_update"
+    CANDIDATE_SEARCH = "candidate_search"
+    LEARNING_RETRAIN = "learning_retrain"
+
+class TaskInfo(BaseModel):
+    task_id: str
+    task_type: TaskType
+    status: TaskStatus
+    progress: int = 0  # 0-100
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_by: str  # User ID who created the task
+    metadata: Dict[str, Any] = {}  # Additional task-specific data
+
+class TaskInfoCreate(BaseModel):
+    task_type: TaskType
+    metadata: Dict[str, Any] = {}
+
+class TaskInfoResponse(BaseModel):
+    task_id: str
+    task_type: TaskType
+    status: TaskStatus
+    progress: int
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    created_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    estimated_completion: Optional[datetime] = None
+    metadata: Dict[str, Any] = {}
+
+# Async Resume Processing Models
+class AsyncResumeProcessingResult(BaseModel):
+    candidate_id: str
+    extracted_skills: List[str]
+    experience_years: int
+    parsing_method: str
+    parsing_confidence: Optional[float] = None
+    advanced_parsing_available: bool = False
+    structured_data: Optional[Dict[str, Any]] = None
+    embedding_generated: bool = False
+    faiss_updated: bool = False
+
+class AsyncSearchResult(BaseModel):
+    matches: List[MatchResult]
+    total_candidates_searched: int
+    search_time_ms: int
+    weights_used: Dict[str, float]
+    cached_result: bool = False
