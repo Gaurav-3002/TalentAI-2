@@ -986,6 +986,33 @@ async def get_job_postings(current_user: TokenData = Depends(require_any_auth)):
         logger.error(f"Get jobs error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get jobs")
 
+@api_router.get("/candidates/{candidate_id}/parsed-resume", response_model=ParsedResumeData)
+async def get_candidate_parsed_resume(
+    candidate_id: str,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Get structured parsed resume data for a specific candidate"""
+    try:
+        candidate = await db.candidates.find_one({"id": candidate_id})
+        if not candidate:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+        
+        candidate_obj = Candidate(**candidate)
+        
+        if not candidate_obj.parsed_resume:
+            raise HTTPException(
+                status_code=404, 
+                detail="No parsed resume data available. Candidate was processed with basic parsing only."
+            )
+        
+        return candidate_obj.parsed_resume
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get parsed resume error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get parsed resume")
+
 @api_router.get("/candidates/{candidate_id}", response_model=CandidateResponse)
 async def get_candidate(
     candidate_id: str,
