@@ -193,7 +193,10 @@ class CandidateResponse(BaseModel):
                 skills=candidate.skills,
                 experience_years=candidate.experience_years,
                 education=candidate.education,
-                created_at=candidate.created_at
+                created_at=candidate.created_at,
+                parsing_method=getattr(candidate, 'parsing_method', 'basic'),
+                parsing_confidence=getattr(candidate, 'parsing_confidence', None),
+                has_structured_data=candidate.parsed_resume is not None
             )
         else:
             return cls(
@@ -203,7 +206,10 @@ class CandidateResponse(BaseModel):
                 skills=candidate.skills,
                 experience_years=candidate.experience_years,
                 education=candidate.education,
-                created_at=candidate.created_at
+                created_at=candidate.created_at,
+                parsing_method=getattr(candidate, 'parsing_method', 'basic'),
+                parsing_confidence=getattr(candidate, 'parsing_confidence', None),
+                has_structured_data=candidate.parsed_resume is not None
             )
 
 class CandidateCreate(BaseModel):
