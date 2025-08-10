@@ -23,6 +23,16 @@ import asyncio
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 
+# Import observability components
+from observability import (
+    setup_observability, instrument_app, monitor_endpoint, 
+    monitor_resume_processing, monitor_search_operation,
+    monitor_ml_model, monitor_database_operation,
+    update_system_health, update_active_users,
+    slo_tracker, start_prometheus_server,
+    metrics_instance
+)
+
 # Import our new auth and models
 from auth import (
     get_current_user, require_admin, require_recruiter, require_any_auth,
