@@ -1124,6 +1124,225 @@ async def get_job_posting(
         logger.error(f"Get job error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get job")
 
+# Task Management and Async Processing Endpoints
+
+# Task Service initialization
+from task_service import TaskService
+from models import TaskType, TaskInfoResponse, AsyncResumeProcessingResult, AsyncSearchResult
+
+@api_router.post("/resume-async", response_model=Dict[str, str])
+async def upload_resume_async(
+    file: Optional[UploadFile] = File(None),
+    name: str = Form(...),
+    email: str = Form(...),
+    resume_text: Optional[str] = Form(None),
+    skills: Optional[str] = Form(""),
+    experience_years: Optional[int] = Form(0),
+    education: Optional[str] = Form(""),
+    current_user: TokenData = Depends(require_any_auth)
+):
+    """Start async resume processing task"""
+    try:
+        task_service = TaskService(db)
+        
+        # Convert file to base64 if provided
+        file_content_b64 = None
+        filename = None
+        if file:
+            file_content = await file.read()
+            import base64
+            file_content_b64 = base64.b64encode(file_content).decode('utf-8')
+            filename = file.filename
+        
+        # Start async task
+        task_id = await task_service.start_resume_processing(
+            file_content_b64=file_content_b64,
+            filename=filename,
+            resume_text=resume_text,
+            name=name,
+            email=email,
+            skills=skills or "",
+            experience_years=experience_years or 0,
+            education=education or "",
+            user_id=current_user.user_id
+        )
+        
+        return {
+            "task_id": task_id,
+            "message": "Resume processing started",
+            "status_url": f"/api/tasks/{task_id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Async resume processing start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start resume processing: {str(e)}")
+
+@api_router.post("/search-async", response_model=Dict[str, str])
+async def search_candidates_async_endpoint(
+    request: Request,
+    job_id: str,
+    k: int = 10,
+    blind_screening: bool = False,
+    current_user: TokenData = Depends(require_recruiter)
+):
+    """Start async candidate search task"""
+    try:
+        task_service = TaskService(db)
+        
+        # Generate session ID for this search
+        import uuid
+        session_id = str(uuid.uuid4())
+        
+        # Start async task
+        task_id = await task_service.start_candidate_search(
+            job_id=job_id,
+            k=k,
+            blind_screening=blind_screening,
+            user_id=current_user.user_id,
+            session_id=session_id
+        )
+        
+        return {
+            "task_id": task_id,
+            "message": "Candidate search started",
+            "status_url": f"/api/tasks/{task_id}",
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Async search start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start candidate search: {str(e)}")
+
+@api_router.post("/learning/retrain-async", response_model=Dict[str, str])
+async def retrain_model_async(
+    job_category: Optional[str] = None,
+    recruiter_id: Optional[str] = None,
+    force_retrain: bool = False,
+    current_user: TokenData = Depends(require_admin)
+):
+    """Start async model retraining task (admin only)"""
+    try:
+        task_service = TaskService(db)
+        
+        # Start async task
+        task_id = await task_service.start_model_retraining(
+            job_category=job_category,
+            recruiter_id=recruiter_id,
+            force_retrain=force_retrain,
+            user_id=current_user.user_id
+        )
+        
+        return {
+            "task_id": task_id,
+            "message": "Model retraining started",
+            "status_url": f"/api/tasks/{task_id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Async retraining start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start model retraining: {str(e)}")
+
+# Task Status and Management Endpoints
+
+@api_router.get("/tasks/{task_id}", response_model=TaskInfoResponse)
+async def get_task_status(
+    task_id: str,
+    current_user: TokenData = Depends(require_any_auth)
+):
+    """Get status of a specific task"""
+    try:
+        task_service = TaskService(db)
+        task_status = await task_service.get_task_status(task_id)
+        
+        if not task_status:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        # Check if user owns the task or is admin
+        if task_status.created_by != current_user.user_id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Access denied to this task")
+        
+        return task_status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get task status error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get task status")
+
+@api_router.get("/tasks", response_model=List[TaskInfoResponse])
+async def get_user_tasks(
+    task_type: Optional[TaskType] = None,
+    limit: int = 50,
+    current_user: TokenData = Depends(require_any_auth)
+):
+    """Get tasks for current user"""
+    try:
+        task_service = TaskService(db)
+        tasks = await task_service.get_user_tasks(
+            user_id=current_user.user_id,
+            task_type=task_type,
+            limit=min(limit, 100)  # Cap at 100
+        )
+        
+        return tasks
+        
+    except Exception as e:
+        logger.error(f"Get user tasks error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get tasks")
+
+@api_router.delete("/tasks/{task_id}")
+async def cancel_task(
+    task_id: str,
+    current_user: TokenData = Depends(require_any_auth)
+):
+    """Cancel a running task"""
+    try:
+        task_service = TaskService(db)
+        success = await task_service.cancel_task(task_id, current_user.user_id)
+        
+        if not success:
+            raise HTTPException(status_code=400, detail="Task not found or cannot be cancelled")
+        
+        return {"message": "Task cancelled successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Cancel task error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to cancel task")
+
+@api_router.post("/embeddings/batch-async", response_model=Dict[str, str])
+async def generate_embeddings_batch_async(
+    texts: List[str],
+    batch_name: str = "batch",
+    current_user: TokenData = Depends(require_admin)
+):
+    """Start async batch embedding generation (admin only)"""
+    try:
+        if len(texts) > 1000:
+            raise HTTPException(status_code=400, detail="Too many texts, maximum 1000 per batch")
+        
+        task_service = TaskService(db)
+        
+        # Start async task
+        task_id = await task_service.start_batch_embedding_generation(
+            texts=texts,
+            batch_name=batch_name,
+            user_id=current_user.user_id
+        )
+        
+        return {
+            "task_id": task_id,
+            "message": f"Batch embedding generation started for {len(texts)} texts",
+            "status_url": f"/api/tasks/{task_id}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Batch embedding start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start batch embedding generation: {str(e)}")
+
 # Learning-to-Rank Endpoints
 @api_router.post("/interactions", status_code=201)
 async def record_recruiter_interaction(
