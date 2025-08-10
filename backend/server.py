@@ -32,7 +32,7 @@ from auth import (
 from models import (
     User, UserCreate, UserLogin, UserResponse, TokenResponse,
     AccessLog, AccessLogCreate, AccessReason,
-    Candidate, CandidateCreate, CandidateResponse,
+    Candidate, CandidateCreate, CandidateResponse, ParsedResumeData,
     JobPosting, JobPostingCreate, MatchResult, SearchRequest,
     StatusCheck, StatusCheckCreate,
     Application, ApplicationCreate, ApplicationWithJob, ApplicationStatus
