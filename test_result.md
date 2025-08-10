@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Sprint 6 — Security Features - Implement authentication system with JWT tokens, role-based access control (admin/recruiter/candidate), user management, access logging for compliance, PII redaction for blind screening, and protected endpoints requiring proper authorization."
+user_problem_statement: "Monitoring & Observability - Implement OpenTelemetry, metrics dashboard, SLO monitoring. Current: Basic logging only. Requirements: OpenTelemetry implementation, Metrics dashboard, SLO monitoring to enhance existing basic logging."
 
 backend:
   - task: "Vector DB & embeddings (Emergent LLM + FAISS)"
