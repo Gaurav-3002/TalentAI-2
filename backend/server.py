@@ -94,6 +94,17 @@ async def create_indexes():
         await db.applications.create_index([("candidate_id", 1), ("applied_at", -1)])
         await db.applications.create_index([("job_id", 1)])
         
+        # Create indexes for Learning-to-Rank collections
+        await db.recruiter_interactions.create_index([("recruiter_id", 1), ("timestamp", -1)])
+        await db.recruiter_interactions.create_index([("candidate_id", 1)])
+        await db.recruiter_interactions.create_index([("job_id", 1)])
+        await db.recruiter_interactions.create_index([("interaction_type", 1)])
+        await db.recruiter_interactions.create_index([("timestamp", -1)])
+        await db.learning_weights.create_index([("job_category", 1), ("last_updated", -1)])
+        await db.learning_weights.create_index([("last_updated", -1)])
+        await db.search_cache.create_index([("recruiter_id", 1), ("timestamp", -1)])
+        await db.search_cache.create_index([("timestamp", 1)], expireAfterSeconds=1800)  # Expire after 30 minutes
+        
     except Exception as e:
         logger.info(f"Index creation info: {e}")
 
