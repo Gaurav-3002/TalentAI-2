@@ -354,10 +354,14 @@ async def register_user(user_data: UserCreate):
 @monitor_endpoint("auth_login", "POST")
 async def login_user(user_credentials: UserLogin):
     """Authenticate user and return JWT token"""
+    auth_status = "failure"
     try:
         # Find user by email
         user_doc = await db.users.find_one({"email": user_credentials.email})
         if not user_doc:
+            metrics_instance.auth_attempts_total.labels(
+                auth_type="login", status="invalid_email"
+            ).inc()
             raise HTTPException(
                 status_code=401,
                 detail="Invalid email or password"
@@ -367,12 +371,18 @@ async def login_user(user_credentials: UserLogin):
         
         # Verify password
         if not verify_password(user_credentials.password, user.hashed_password):
+            metrics_instance.auth_attempts_total.labels(
+                auth_type="login", status="invalid_password"
+            ).inc()
             raise HTTPException(
                 status_code=401,
                 detail="Invalid email or password"
             )
         
         if not user.is_active:
+            metrics_instance.auth_attempts_total.labels(
+                auth_type="login", status="inactive_account"
+            ).inc()
             raise HTTPException(
                 status_code=401,
                 detail="Account is inactive"
@@ -396,6 +406,11 @@ async def login_user(user_credentials: UserLogin):
         user_response = UserResponse(**user.dict())
         user_response.last_login = datetime.utcnow()
         
+        auth_status = "success"
+        metrics_instance.auth_attempts_total.labels(
+            auth_type="login", status="success"
+        ).inc()
+        
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
@@ -406,6 +421,9 @@ async def login_user(user_credentials: UserLogin):
         raise
     except Exception as e:
         logger.error(f"Login error: {e}")
+        metrics_instance.auth_attempts_total.labels(
+            auth_type="login", status="error"
+        ).inc()
         raise HTTPException(status_code=500, detail="Login failed")
 
 @api_router.get("/auth/me", response_model=UserResponse)
