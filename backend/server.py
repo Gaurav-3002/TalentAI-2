@@ -351,6 +351,7 @@ async def register_user(user_data: UserCreate):
         raise HTTPException(status_code=500, detail="Registration failed")
 
 @api_router.post("/auth/login", response_model=TokenResponse)
+@monitor_endpoint("auth_login", "POST")
 async def login_user(user_credentials: UserLogin):
     """Authenticate user and return JWT token"""
     try:
