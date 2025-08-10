@@ -396,3 +396,6 @@ agent_communication:
     message: "✅ COMPREHENSIVE POST-FIX VERIFICATION COMPLETED - Tested complete job matching backend after threadpoolctl dependency fix. 82.5% success rate (33/40 tests passed). All CRITICAL functionality working: Authentication system with seeded accounts (admin@jobmatcher.com/admin123, recruiter@jobmatcher.com/recruiter123), JWT tokens, role-based access control, resume upload with ML parsing, job creation with skill extraction, candidate search with semantic matching, access logging, PII redaction/blind screening. Minor issues: API returns 403 instead of 401 for missing tokens, search returns 500 instead of 404 for invalid job IDs (both acceptable). Backend is fully operational and ready for production use."
   - agent: "main"
     message: "Fixed critical regex dependency issue that was preventing backend startup. Updated requirements.txt with regex>=2023.12.25 and restarted backend successfully. Backend is now operational."
+
+  - agent: "main"
+    message: "Fixed login/register by resolving backend dependency: added litellm to requirements (needed by emergentintegrations) and restarted backend. Backend seeded demo users on startup. Verified: Admin and Recruiter demo logins succeed; New user registration returns 200 and subsequent login works."
