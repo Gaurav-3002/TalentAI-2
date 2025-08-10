@@ -131,35 +131,37 @@ const Dashboard = () => {
       
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Card elevation={3}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
-                    p: 2,
-                    borderRadius: 2,
-                    mr: 3,
-                  }}
-                >
-                  <PersonIcon sx={{ fontSize: 32 }} />
+        {!isCandidate() && (
+          <Grid item xs={12} md={isCandidate() ? 12 : 6}>
+            <Card elevation={3}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box
+                    sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      p: 2,
+                      borderRadius: 2,
+                      mr: 3,
+                    }}
+                  >
+                    <PersonIcon sx={{ fontSize: 32 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" color="text.secondary">
+                      Total Candidates
+                    </Typography>
+                    <Typography variant="h3" color="primary.main" fontWeight="bold">
+                      {stats.candidatesCount}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="h6" color="text.secondary">
-                    Total Candidates
-                  </Typography>
-                  <Typography variant="h3" color="primary.main" fontWeight="bold">
-                    {stats.candidatesCount}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
         
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={isCandidate() ? 12 : 6}>
           <Card elevation={3}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -176,7 +178,7 @@ const Dashboard = () => {
                 </Box>
                 <Box>
                   <Typography variant="h6" color="text.secondary">
-                    Total Jobs
+                    {isCandidate() ? 'Available Jobs' : 'Total Jobs'}
                   </Typography>
                   <Typography variant="h3" color="success.main" fontWeight="bold">
                     {stats.jobsCount}
