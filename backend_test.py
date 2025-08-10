@@ -6,7 +6,7 @@ import os
 import time
 
 class JobMatchingAPITester:
-    def __init__(self, base_url="https://cd03202a-fe69-421e-96bf-700c52b040ea.preview.emergentagent.com"):
+    def __init__(self, base_url="https://bacd773e-410f-4b18-862d-d3dacb6b12d2.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
