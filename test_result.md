@@ -146,15 +146,18 @@ backend:
 
   - task: "External Grafana + Prometheus setup"
     implemented: true
-    working: true
+    working: "NA"
     file: "docker-compose.monitoring.yml, monitoring/ folder"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Created complete Docker Compose setup for Prometheus + Grafana + Alertmanager with pre-configured dashboards. Includes system overview dashboard, SLO dashboard, alert rules for SLO violations, and data source configurations. Grafana accessible on port 3001, Prometheus on 9090."
+      - working: "NA"
+        agent: "testing"
+        comment: "❌ EXTERNAL MONITORING NOT TESTED - Cannot test external Grafana/Prometheus setup through frontend interface. This requires separate infrastructure testing outside the scope of frontend UI testing."
 
   - task: "SLO monitoring and alerting"
     implemented: true
