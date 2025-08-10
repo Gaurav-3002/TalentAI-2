@@ -50,7 +50,8 @@ async def add_sample_data():
             "education": "Master's in Software Engineering",
             "resume_text": "Senior backend developer with expertise in Python and Django. Experience in ML model deployment and containerization.",
             "parsing_method": "basic",
-            "parsing_confidence": None
+            "parsing_confidence": None,
+            "created_by": "admin"
         },
         {
             "name": "Carol Davis",
