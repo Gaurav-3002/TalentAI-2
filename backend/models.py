@@ -340,3 +340,50 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+# Learning-to-Rank Models
+class InteractionType(str, Enum):
+    CLICK = "click"
+    SHORTLIST = "shortlist"
+    APPLICATION = "application"
+    INTERVIEW = "interview"
+    HIRE = "hire"
+    REJECT = "reject"
+
+class RecruiterInteraction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    recruiter_id: str
+    candidate_id: str
+    job_id: str
+    interaction_type: InteractionType
+    search_position: Optional[int] = None  # Position in search results when action taken
+    original_score: Optional[float] = None  # Original matching score
+    semantic_score: Optional[float] = None
+    skill_overlap_score: Optional[float] = None
+    experience_match_score: Optional[float] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    session_id: Optional[str] = None  # To group related interactions
+    feedback_value: float = 0.0  # Computed reward value for RL
+
+class InteractionCreate(BaseModel):
+    candidate_id: str
+    job_id: str
+    interaction_type: InteractionType
+    search_position: Optional[int] = None
+    session_id: Optional[str] = None
+
+class LearningWeights(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    semantic_weight: float = 0.4
+    skill_weight: float = 0.4
+    experience_weight: float = 0.2
+    confidence_score: float = 0.0  # How confident we are in these weights
+    interaction_count: int = 0  # Number of interactions used to learn these weights
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    job_category: Optional[str] = None  # Optional: different weights per job category
+    performance_metrics: Dict[str, float] = {}  # Track performance metrics
+
+class WeightsUpdate(BaseModel):
+    semantic_weight: Optional[float] = None
+    skill_weight: Optional[float] = None  
+    experience_weight: Optional[float] = None
