@@ -1789,14 +1789,26 @@ async def startup_event():
     await create_indexes()
     await seed_initial_users()
     
+    # Initialize observability
+    try:
+        instrument_app(app)
+        # Start Prometheus metrics server on a different port
+        prometheus_port = int(os.getenv("PROMETHEUS_PORT", "8000"))
+        start_prometheus_server(prometheus_port)
+        observability_logger.info(f"Observability initialized, Prometheus server on port {prometheus_port}")
+    except Exception as e:
+        observability_logger.error(f"Failed to initialize observability: {e}")
+    
     # Initialize EmbeddingService
     try:
         embedding_service = EmbeddingService()
         app.state.embedding_service = embedding_service
         logger.info("EmbeddingService initialized successfully")
+        update_system_health("embedding_service", True)
     except Exception as e:
         logger.error(f"Failed to initialize EmbeddingService: {e}")
         app.state.embedding_service = None
+        update_system_health("embedding_service", False)
     
     # Initialize FAISS
     try:
@@ -1807,18 +1819,22 @@ async def startup_event():
         await faiss_service.initialize()
         app.state.faiss = faiss_service
         logger.info("FAISS service initialized successfully")
+        update_system_health("faiss", True)
     except Exception as e:
         logger.error(f"Failed to initialize FAISS: {e}")
         app.state.faiss = None
+        update_system_health("faiss", False)
     
     # Initialize Learning-to-Rank Engine
     try:
         learning_engine = LearningToRankEngine(db)
         app.state.learning_engine = learning_engine
         logger.info("Learning-to-Rank engine initialized successfully")
+        update_system_health("learning_engine", True)
     except Exception as e:
         logger.error(f"Failed to initialize Learning-to-Rank engine: {e}")
         app.state.learning_engine = None
+        update_system_health("learning_engine", False)
     
     # Initialize Task Service
     try:
@@ -1826,11 +1842,14 @@ async def startup_event():
         task_service = TaskService(db)
         app.state.task_service = task_service
         logger.info("Task service initialized successfully")
+        update_system_health("task_service", True)
     except Exception as e:
         logger.error(f"Failed to initialize Task service: {e}")
         app.state.task_service = None
+        update_system_health("task_service", False)
     
     logger.info("Job Matching API started successfully")
+    update_system_health("api", True)
 
 async def seed_initial_users():
     """Create initial admin and recruiter users"""
