@@ -185,59 +185,16 @@ def extract_experience_years(text: str) -> int:
     return max_years
 
 async def generate_embedding(text: str) -> List[float]:
-    """Generate embedding using TF-IDF with improved corpus"""
+    """Generate embedding using Emergent Integrations via EmbeddingService."""
     try:
-        # Create a more comprehensive corpus for better TF-IDF results
-        tech_corpus = [
-            text,
-            "software engineer developer programming coding",
-            "javascript python java react node.js",
-            "database mongodb mysql postgresql sql",
-            "cloud aws azure docker kubernetes",
-            "frontend backend full stack development",
-            "machine learning ai artificial intelligence",
-            "marketing manager social media campaigns",
-            "data analysis analytics visualization"
-        ]
-        
-        vectorizer = TfidfVectorizer(
-            max_features=384, 
-            stop_words='english', 
-            lowercase=True,
-            ngram_range=(1, 2),  # Include bigrams
-            min_df=1,
-            max_df=0.95
-        )
-        
-        try:
-            tfidf_matrix = vectorizer.fit_transform(tech_corpus)
-            # Get the embedding for our input text (first document)
-            embedding = tfidf_matrix[0].toarray()[0].tolist()
-            
-            # Normalize the embedding
-            norm = np.linalg.norm(embedding)
-            if norm > 0:
-                embedding = (embedding / norm).tolist()
-            else:
-                # Create a basic embedding based on text features
-                words = text.lower().split()
-                embedding = [len(words) / 100.0] + [0.1 if word in text.lower() else 0.0 for word in ['javascript', 'python', 'react', 'node', 'database', 'aws', 'docker', 'machine learning', 'marketing', 'design']]
-                embedding = embedding[:384] + [0.0] * (384 - len(embedding))
-            
-            return embedding
-        except Exception as e:
-            logger.error(f"TF-IDF embedding error: {e}")
-            # Return a simple hash-based embedding as fallback
-            import hashlib
-            text_hash = hashlib.md5(text.lower().encode()).hexdigest()
-            embedding = [float(int(char, 16)) / 15.0 for char in text_hash]
-            embedding = embedding + [0.1] * (384 - len(embedding))
-            return embedding[:384]
-            
+        svc = getattr(app.state, "embedding_service", None)
+        if not svc:
+            raise RuntimeError("Embedding service not initialized")
+        emb = await svc.generate_single_embedding(text)
+        return emb or []
     except Exception as e:
         logger.error(f"Embedding generation error: {e}")
-        # Return zero vector as fallback
-        return [0.1] * 384  # Small values instead of zeros
+        return []
 
 def calculate_similarity(embedding1: List[float], embedding2: List[float]) -> float:
     """Calculate cosine similarity between embeddings"""
