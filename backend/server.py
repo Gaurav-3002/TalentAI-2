@@ -1384,6 +1384,7 @@ async def generate_embeddings_batch_async(
 
 # Learning-to-Rank Endpoints
 @api_router.post("/interactions", status_code=201)
+@monitor_ml_model("learning_to_rank")
 async def record_recruiter_interaction(
     interaction: InteractionCreate,
     current_user: TokenData = Depends(require_recruiter)
