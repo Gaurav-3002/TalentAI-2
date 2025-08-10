@@ -33,22 +33,22 @@ class JobMatchingAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=headers, timeout=30)
             elif method == 'POST':
                 if files or form_data:
                     # Send as form data (multipart/form-data)
-                    response = requests.post(url, data=data, files=files, headers=headers)
+                    response = requests.post(url, data=data, files=files, headers=headers, timeout=30)
                 elif data:
                     headers['Content-Type'] = 'application/json'
-                    response = requests.post(url, json=data, headers=headers)
+                    response = requests.post(url, json=data, headers=headers, timeout=30)
                 else:
-                    response = requests.post(url, headers=headers)
+                    response = requests.post(url, headers=headers, timeout=30)
             elif method == 'PUT':
                 if data:
                     headers['Content-Type'] = 'application/json'
-                    response = requests.put(url, json=data, headers=headers)
+                    response = requests.put(url, json=data, headers=headers, timeout=30)
                 else:
-                    response = requests.put(url, headers=headers)
+                    response = requests.put(url, headers=headers, timeout=30)
 
             success = response.status_code == expected_status
             if success:
@@ -72,6 +72,12 @@ class JobMatchingAPITester:
                     print(f"   Response: {response.text[:200]}")
                 return False, {}
 
+        except requests.exceptions.Timeout:
+            print(f"❌ Failed - Request timeout (30s)")
+            return False, {}
+        except requests.exceptions.ConnectionError as e:
+            print(f"❌ Failed - Connection error: {str(e)}")
+            return False, {}
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
