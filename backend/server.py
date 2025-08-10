@@ -946,17 +946,17 @@ async def search_candidates(
                 job_obj.min_experience_years
             )
             
-            # Calculate total score (weighted average)
+            # Calculate total score using ML-optimized weights
             total_score = (
-                semantic_score * 0.4 +        # 40% semantic similarity
-                skill_overlap * 0.4 +         # 40% skill overlap
-                experience_match * 0.2        # 20% experience match
+                semantic_score * weights['semantic'] +
+                skill_overlap * weights['skill'] +
+                experience_match * weights['experience']
             )
             
             score_breakdown = {
-                "semantic_weight": 0.4,
-                "skill_overlap_weight": 0.4,
-                "experience_weight": 0.2,
+                "semantic_weight": weights['semantic'],
+                "skill_overlap_weight": weights['skill'],
+                "experience_weight": weights['experience'],
                 "matched_skills": list(set(candidate.skills).intersection(set(job_obj.required_skills))),
                 "missing_skills": list(set(job_obj.required_skills) - set(candidate.skills))
             }
