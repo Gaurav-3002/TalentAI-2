@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from .models import (
+from models import (
     RecruiterInteraction, 
     LearningWeights, 
     InteractionType, 
