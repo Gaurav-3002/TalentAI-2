@@ -1,0 +1,200 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "TalentAI - SLO Dashboard",
+    "tags": ["talentai", "slo"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "SLO: API Response Time < 500ms (99%)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(rate(talentai_slo_api_response_time_seconds_bucket{le=\"0.5\"}[5m]) / rate(talentai_slo_api_response_time_seconds_count[5m])) * 100",
+            "legendFormat": "% under 500ms"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 95
+                },
+                {
+                  "color": "green",
+                  "value": 99
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "SLO: Resume Processing Success Rate > 95%",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(rate(talentai_slo_resume_processing_success_total{status=\"success\"}[1h]) / rate(talentai_slo_resume_processing_success_total[1h])) * 100",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 90
+                },
+                {
+                  "color": "green",
+                  "value": 95
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "SLO: Search Accuracy Trend",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg_over_time(talentai_slo_search_accuracy[1h]) * 100",
+            "legendFormat": "Avg Accuracy"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "green",
+                  "value": 85
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "API Response Time Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "increase(talentai_slo_api_response_time_seconds_bucket[5m])",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Resume Processing Success Rate Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(rate(talentai_slo_resume_processing_success_total{status=\"success\"}[5m]) / rate(talentai_slo_resume_processing_success_total[5m])) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 18
+        }
+      },
+      {
+        "id": 6,
+        "title": "Search Accuracy Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "talentai_slo_search_accuracy * 100",
+            "legendFormat": "Accuracy %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Accuracy %",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 18
+        }
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}
