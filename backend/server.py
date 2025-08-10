@@ -1523,6 +1523,16 @@ async def startup_event():
         logger.error(f"Failed to initialize Learning-to-Rank engine: {e}")
         app.state.learning_engine = None
     
+    # Initialize Task Service
+    try:
+        from task_service import TaskService
+        task_service = TaskService(db)
+        app.state.task_service = task_service
+        logger.info("Task service initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Task service: {e}")
+        app.state.task_service = None
+    
     logger.info("Job Matching API started successfully")
 
 async def seed_initial_users():
