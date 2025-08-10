@@ -155,7 +155,7 @@ const UserManagement = () => {
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Box
                 component="img"
-                src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/urrv20kt_Job_portal_about.png"
+                src="/empty-states/no-users.png"
                 alt="User Management"
                 sx={{
                   width: '100%',
