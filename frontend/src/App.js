@@ -192,7 +192,129 @@ const Dashboard = () => {
       </Grid>
 
       {/* Recent Data - Show different content based on user type */}
-      {/* ... unchanged content below ... */}
+      <Grid container spacing={3}>
+        {/* Candidates Section - Only for non-candidates */}
+        {!isCandidate() && (
+          <Grid item xs={12} md={6}>
+            <Card elevation={3}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <PersonIcon sx={{ mr: 2, color: 'primary.main' }} />
+                  Recent Candidates
+                </Typography>
+                
+                {recentCandidates && recentCandidates.length > 0 ? (
+                  <Box>
+                    {recentCandidates.map((candidate) => (
+                      <Box key={candidate.id} sx={{ py: 1, borderBottom: '1px solid', borderColor: 'grey.200' }}>
+                        <Typography variant="body1" fontWeight="medium">
+                          {candidate.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {candidate.skills?.slice(0, 2).join(', ')} 
+                          {candidate.skills?.length > 2 && ` +${candidate.skills.length - 2} more`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {candidate.experience_years} years experience
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Box sx={{ textAlign: 'center', mt: 2 }}>
+                      <Button variant="outlined" size="small" href="/search">
+                        View All Candidates
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Box
+                      component="img"
+                      src="/empty-states/no-candidates.avif"
+                      alt="No candidates yet"
+                      sx={{
+                        width: '100%',
+                        maxWidth: 120,
+                        height: 'auto',
+                        mb: 2,
+                        borderRadius: 1,
+                        opacity: 0.7
+                      }}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      No candidates uploaded yet
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+        
+        {/* Jobs Section - Available for all users */}
+        <Grid item xs={12} md={isCandidate() ? 12 : 6}>
+          <Card elevation={3}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <WorkIcon sx={{ mr: 2, color: 'success.main' }} />
+                {isCandidate() ? 'Available Jobs' : 'Recent Job Postings'}
+              </Typography>
+              
+              {recentJobs && recentJobs.length > 0 ? (
+                <Box>
+                  {recentJobs.map((job) => (
+                    <Box key={job.id} sx={{ py: 1, borderBottom: '1px solid', borderColor: 'grey.200' }}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {job.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {job.company} • {job.location}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {job.min_experience_years}+ years • {job.required_skills?.slice(0, 2).join(', ')}
+                        {job.required_skills?.length > 2 && ` +${job.required_skills.length - 2} more`}
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Box sx={{ textAlign: 'center', mt: 2 }}>
+                    <Button variant="outlined" size="small" href="/search">
+                      {isCandidate() ? 'Browse All Jobs' : 'View All Jobs'}
+                    </Button>
+                  </Box>
+                </Box>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Box
+                    component="img"
+                    src="/empty-states/no-jobs.png"
+                    alt="No jobs yet"
+                    sx={{
+                      width: '100%',
+                      maxWidth: 120,
+                      height: 'auto',
+                      mb: 2,
+                      borderRadius: 1,
+                      opacity: 0.7
+                    }}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    No job postings available yet
+                  </Typography>
+                  {!isCandidate() && (
+                    <Button 
+                      variant="text" 
+                      size="small" 
+                      href="/post-job"
+                      sx={{ mt: 1 }}
+                    >
+                      Post a Job
+                    </Button>
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
     </Container>
   );
