@@ -1519,6 +1519,11 @@ async def get_prometheus_metrics():
     from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
+@api_router.get("/test-monitoring")
+async def test_monitoring():
+    """Test monitoring endpoint"""
+    return {"status": "ok", "message": "Monitoring endpoints work"}
+
 @api_router.get("/monitoring/health")
 async def health_check():
     """Comprehensive health check endpoint"""
