@@ -611,53 +611,154 @@ async def upload_resume(
     education: Optional[str] = Form(""),
     current_user: TokenData = Depends(require_any_auth)
 ):
-    """Upload and process resume (authenticated users only)"""
+    """Upload and process resume with advanced LLM parsing (authenticated users only)"""
     try:
         extracted_text = ""
+        parsed_resume = None
+        parsing_method = "basic"
+        parsing_confidence = None
         
-        # Extract text from uploaded file if provided
+        # Step 1: Extract text from uploaded file if provided
         if file:
             file_content = await file.read()
-            if file.filename.lower().endswith('.pdf'):
-                extracted_text = extract_text_from_pdf(file_content)
-            elif file.filename.lower().endswith('.docx'):
-                extracted_text = extract_text_from_docx(file_content)
-            elif file.filename.lower().endswith('.txt'):
-                extracted_text = file_content.decode('utf-8')
+            filename = file.filename or "resume"
+            
+            # Try advanced parsing first if available
+            if advanced_parser.is_available():
+                try:
+                    logger.info(f"Attempting advanced parsing for file: {filename}")
+                    parsed_data = await advanced_parser.parse_resume_from_file(
+                        file_content, filename
+                    )
+                    
+                    # Convert to ParsedResumeData model
+                    parsed_resume = ParsedResumeData(**parsed_data)
+                    parsing_method = "llm_advanced"
+                    parsing_confidence = parsed_resume.parsing_confidence
+                    
+                    # Extract text from parsed data or use original method as fallback
+                    if parsed_resume.personal_info.name:
+                        extracted_text = f"Resume content processed via LLM\n"
+                        extracted_text += f"Name: {parsed_resume.personal_info.name}\n"
+                        extracted_text += f"Summary: {parsed_resume.summary or ''}\n"
+                        
+                        # Add work experience text
+                        for exp in parsed_resume.work_experience:
+                            extracted_text += f"\nWork: {exp.position} at {exp.company} ({exp.duration})\n"
+                            extracted_text += "\n".join(exp.responsibilities)
+                        
+                        # Add education text
+                        for edu in parsed_resume.education:
+                            extracted_text += f"\nEducation: {edu.degree} in {edu.field} from {edu.institution}\n"
+                        
+                        # Add projects
+                        for proj in parsed_resume.projects:
+                            extracted_text += f"\nProject: {proj.name} - {proj.description}\n"
+                    
+                    logger.info(f"Advanced parsing successful with confidence: {parsing_confidence}")
+                    
+                except Exception as e:
+                    logger.warning(f"Advanced parsing failed, falling back to basic: {e}")
+                    # Fall back to basic parsing
+                    if filename.lower().endswith('.pdf'):
+                        extracted_text = extract_text_from_pdf(file_content)
+                    elif filename.lower().endswith('.docx'):
+                        extracted_text = extract_text_from_docx(file_content)
+                    elif filename.lower().endswith('.txt'):
+                        extracted_text = file_content.decode('utf-8')
+            else:
+                # Use basic parsing
+                logger.info("Advanced parser not available, using basic parsing")
+                if filename.lower().endswith('.pdf'):
+                    extracted_text = extract_text_from_pdf(file_content)
+                elif filename.lower().endswith('.docx'):
+                    extracted_text = extract_text_from_docx(file_content)
+                elif filename.lower().endswith('.txt'):
+                    extracted_text = file_content.decode('utf-8')
+        
+        # Step 2: Handle text-only resume input
+        elif resume_text and not file:
+            if advanced_parser.is_available():
+                try:
+                    logger.info("Attempting advanced parsing for text input")
+                    parsed_data = await advanced_parser.parse_resume_from_text(resume_text)
+                    parsed_resume = ParsedResumeData(**parsed_data)
+                    parsing_method = "llm_text"
+                    parsing_confidence = parsed_resume.parsing_confidence
+                    extracted_text = resume_text
+                    logger.info(f"Advanced text parsing successful with confidence: {parsing_confidence}")
+                except Exception as e:
+                    logger.warning(f"Advanced text parsing failed, using basic: {e}")
+                    extracted_text = resume_text
+            else:
+                extracted_text = resume_text
         
         # Use provided resume_text or extracted text
         final_text = resume_text or extracted_text
         if not final_text:
             raise HTTPException(status_code=400, detail="No resume text provided")
         
-        # Parse skills from text if not provided
-        provided_skills = [s.strip() for s in skills.split(",") if s.strip()] if skills else []
-        extracted_skills = extract_skills_from_text(final_text)
-        all_skills = list(set(provided_skills + extracted_skills))
-        normalized_skills = normalize_skills(all_skills)
+        # Step 3: Extract skills and experience
+        if parsed_resume:
+            # Use LLM-extracted data
+            final_skills = advanced_parser.extract_normalized_skills(parsed_resume.dict())
+            final_experience = advanced_parser.extract_experience_years(parsed_resume.dict())
+            
+            # Override with manual input if provided
+            if skills.strip():
+                manual_skills = [s.strip() for s in skills.split(",") if s.strip()]
+                final_skills.extend(manual_skills)
+                final_skills = list(set(final_skills))  # Deduplicate
+            
+            if experience_years > 0:
+                final_experience = experience_years
+                
+            # Get education from parsed data if not manually provided
+            if not education and parsed_resume.education:
+                education_text = []
+                for edu in parsed_resume.education:
+                    edu_str = f"{edu.degree} in {edu.field} from {edu.institution}"
+                    if edu.graduation_date:
+                        edu_str += f" ({edu.graduation_date})"
+                    education_text.append(edu_str)
+                education = "; ".join(education_text)
+            
+            # Use name and email from parsed data if available
+            if not name and parsed_resume.personal_info.name:
+                name = parsed_resume.personal_info.name
+            if not email and parsed_resume.personal_info.email:
+                email = parsed_resume.personal_info.email
+                
+        else:
+            # Use basic parsing methods
+            provided_skills = [s.strip() for s in skills.split(",") if s.strip()] if skills else []
+            extracted_skills = extract_skills_from_text(final_text)
+            all_skills = list(set(provided_skills + extracted_skills))
+            final_skills = normalize_skills(all_skills)
+            final_experience = experience_years or extract_experience_years(final_text)
         
-        # Extract experience if not provided
-        final_experience = experience_years or extract_experience_years(final_text)
-        
-        # Generate embedding
+        # Step 4: Generate embedding
         embedding = await generate_embedding(final_text)
         
-        # Create candidate
+        # Step 5: Create candidate with enhanced data
         candidate = Candidate(
             name=name,
             email=email,
-            skills=normalized_skills,
+            skills=final_skills,
             experience_years=final_experience,
             education=education,
             resume_text=final_text,
             embedding=embedding,
-            created_by=current_user.user_id
+            created_by=current_user.user_id,
+            parsed_resume=parsed_resume,
+            parsing_method=parsing_method,
+            parsing_confidence=parsing_confidence
         )
         
-        # Store in database
+        # Step 6: Store in database
         await db.candidates.insert_one(candidate.dict())
 
-        # Upsert into FAISS
+        # Step 7: Upsert into FAISS
         try:
             faiss = getattr(app.state, "faiss", None)
             if faiss and candidate.embedding:
@@ -670,12 +771,32 @@ async def upload_resume(
         except Exception as e:
             logger.error(f"FAISS add candidate failed: {e}")
         
-        return {
+        # Step 8: Return enhanced response
+        response_data = {
             "message": "Resume processed successfully",
             "candidate_id": candidate.id,
-            "extracted_skills": normalized_skills,
-            "experience_years": final_experience
+            "extracted_skills": final_skills,
+            "experience_years": final_experience,
+            "parsing_method": parsing_method
         }
+        
+        if parsing_confidence is not None:
+            response_data["parsing_confidence"] = parsing_confidence
+            
+        if parsed_resume:
+            response_data["advanced_parsing_available"] = True
+            response_data["structured_data"] = {
+                "personal_info": parsed_resume.personal_info.dict() if parsed_resume.personal_info else None,
+                "summary": parsed_resume.summary,
+                "work_experience_count": len(parsed_resume.work_experience),
+                "education_count": len(parsed_resume.education),
+                "projects_count": len(parsed_resume.projects),
+                "certifications_count": len(parsed_resume.certifications)
+            }
+        else:
+            response_data["advanced_parsing_available"] = False
+        
+        return response_data
         
     except Exception as e:
         logger.error(f"Resume processing error: {e}")
