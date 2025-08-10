@@ -92,7 +92,8 @@ async def add_sample_data():
             "description": "We are looking for an experienced frontend developer to join our growing team. You will be responsible for building user-facing features using React and modern JavaScript.",
             "required_skills": ["JavaScript", "React", "TypeScript", "CSS", "Git"],
             "min_experience_years": 3,
-            "salary": "$120,000 - $160,000"
+            "salary": "$120,000 - $160,000",
+            "created_by": "admin"
         },
         {
             "title": "Python Backend Engineer",
@@ -101,7 +102,8 @@ async def add_sample_data():
             "description": "Join our backend team to build scalable APIs and microservices. Experience with Python, Django, and cloud platforms required.",
             "required_skills": ["Python", "Django", "PostgreSQL", "AWS", "Docker"],
             "min_experience_years": 4,
-            "salary": "$130,000 - $170,000"
+            "salary": "$130,000 - $170,000",
+            "created_by": "admin"
         },
         {
             "title": "Full Stack Java Developer",
@@ -110,7 +112,8 @@ async def add_sample_data():
             "description": "Looking for a full-stack developer with strong Java skills to work on enterprise applications and microservices.",
             "required_skills": ["Java", "Spring Boot", "MySQL", "Angular", "Kubernetes"],
             "min_experience_years": 3,
-            "salary": "$110,000 - $150,000"
+            "salary": "$110,000 - $150,000",
+            "created_by": "admin"
         },
         {
             "title": "Mobile App Developer",
@@ -119,7 +122,8 @@ async def add_sample_data():
             "description": "Build amazing mobile applications for iOS and Android platforms. Experience with React Native or Flutter preferred.",
             "required_skills": ["React Native", "JavaScript", "iOS", "Android", "Firebase"],
             "min_experience_years": 2,
-            "salary": "$100,000 - $140,000"
+            "salary": "$100,000 - $140,000",
+            "created_by": "admin"
         },
         {
             "title": "Data Scientist",
@@ -128,7 +132,8 @@ async def add_sample_data():
             "description": "Apply machine learning and statistical analysis to solve complex business problems. PhD or Master's degree preferred.",
             "required_skills": ["Python", "Machine Learning", "TensorFlow", "SQL", "Statistics"],
             "min_experience_years": 4,
-            "salary": "$140,000 - $180,000"
+            "salary": "$140,000 - $180,000",
+            "created_by": "admin"
         }
     ]
     
