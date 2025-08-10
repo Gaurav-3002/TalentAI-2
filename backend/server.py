@@ -45,6 +45,10 @@ import PyPDF2
 # LLM Integration
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
+# Vector DB and Embeddings Services
+from embedding_service import EmbeddingService
+from vector_store import FAISSService
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
