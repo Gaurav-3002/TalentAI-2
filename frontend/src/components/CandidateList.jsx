@@ -58,7 +58,7 @@ const CandidateList = ({
           <>
             <Box
               component="img"
-              src="https://customer-assets.emergentagent.com/job_bug-fix-central-1/artifacts/gdn5uo0b_choice-worker-concept-illustrated_52683-44076.avif"
+              src="/empty-states/no-candidates.avif"
               alt="No candidates found"
               sx={{
                 width: '100%',
