@@ -7,7 +7,7 @@ import time
 
 class EnhancedResumeParsingTester:
     def __init__(self):
-        self.base_url = "https://2f068322-787b-4e47-ad72-4bf2eb859f45.preview.emergentagent.com"
+        self.base_url = "https://929888ad-de2b-4335-9b41-4f7e2626a2ba.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.auth_token = None
         self.created_candidates = []
