@@ -1110,6 +1110,15 @@ async def startup_event():
         logger.error(f"Failed to initialize FAISS: {e}")
         app.state.faiss = None
     
+    # Initialize Learning-to-Rank Engine
+    try:
+        learning_engine = LearningToRankEngine(db)
+        app.state.learning_engine = learning_engine
+        logger.info("Learning-to-Rank engine initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Learning-to-Rank engine: {e}")
+        app.state.learning_engine = None
+    
     logger.info("Job Matching API started successfully")
 
 async def seed_initial_users():
