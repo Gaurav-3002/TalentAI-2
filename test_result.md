@@ -255,6 +255,81 @@ backend:
         agent: "testing"
         comment: "✅ ENHANCED FIELDS VERIFIED - All candidate response endpoints now include enhanced fields: parsing_method (basic/llm_advanced/llm_text), parsing_confidence (float or null), has_structured_data (boolean). Fields properly populated in individual candidate endpoint, candidates list endpoint, and search results. Backward compatibility maintained."
 
+  - task: "Learning-to-Rank Algorithm Implementation"
+    implemented: true
+    working: true
+    file: "backend/learning_to_rank.py, backend/models.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented complete ML-based matching with reinforcement learning optimization. Created LearningToRankEngine using scikit-learn Ridge regression to learn optimal weights from recruiter interactions. Enhanced search algorithm to use dynamic weights instead of fixed (40/40/20). Added models for RecruiterInteraction, LearningWeights, InteractionType. Implemented search result caching and comprehensive Learning-to-Rank API endpoints."
+      - working: true
+        agent: "testing"
+        comment: "✅ LEARNING-TO-RANK ALGORITHM TESTED SUCCESSFULLY - All 25 comprehensive tests passed (100% success rate). Dynamic weight optimization working - search uses ML-optimized weights with graceful fallback to defaults when insufficient data. All Learning-to-Rank endpoints functional with proper authentication: weights retrieval, interaction recording, metrics monitoring, manual retraining. System preserves all existing functionality while adding advanced ML capabilities. Ready for production deployment."
+
+  - task: "Dynamic Weight Optimization"
+    implemented: true
+    working: true
+    file: "backend/learning_to_rank.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modified search algorithm to use dynamic ML-optimized weights instead of fixed weights (40/40/20). Weights are learned from recruiter interactions using reinforcement learning principles with reward values for different interaction types (click: 0.1, shortlist: 0.3, application: 0.7, hire: 1.0, reject: -0.5). System falls back to default weights when insufficient training data."
+      - working: true
+        agent: "testing"
+        comment: "✅ DYNAMIC WEIGHTS VERIFIED - Search algorithm now uses ML-optimized weights with proper score breakdown transparency. Weights correctly normalized and included in search results. Fallback to default weights working when insufficient data. Position-based bonuses applied for higher-ranking candidate interactions."
+
+  - task: "Recruiter Interaction Tracking"
+    implemented: true
+    working: true
+    file: "backend/learning_to_rank.py, backend/models.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created comprehensive interaction tracking system for Learning-to-Rank. Added RecruiterInteraction model with interaction types (click, shortlist, application, interview, hire, reject). Implemented reward calculation based on interaction type and search position. Added POST /api/interactions endpoint for recording recruiter feedback."
+      - working: true
+        agent: "testing"
+        comment: "✅ INTERACTION TRACKING VERIFIED - All interaction types properly recorded with correct reward calculations. Search position bonuses applied appropriately. Interaction recording endpoint secured with recruiter authentication. Database indexes created for efficient querying."
+
+  - task: "Learning-to-Rank API Endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added comprehensive Learning-to-Rank API endpoints: GET /api/learning/weights (get optimal weights), POST /api/interactions (record interactions), GET /api/learning/metrics (admin metrics), POST /api/learning/retrain (manual retraining). All endpoints secured with appropriate role-based access control."
+      - working: true
+        agent: "testing"
+        comment: "✅ LEARNING ENDPOINTS VERIFIED - All Learning-to-Rank endpoints working with proper authentication. Weight retrieval returns current optimal weights with confidence scores. Metrics endpoint provides comprehensive learning statistics. Manual retraining triggers successful weight optimization. Access control properly enforced."
+
+  - task: "Search Result Caching for Learning"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced search algorithm to cache search results for learning purposes. Added search_cache collection with 30-minute TTL. Cached results include candidate positions, scores, and weights used for accurate learning from subsequent recruiter interactions."
+      - working: true
+        agent: "testing"
+        comment: "✅ SEARCH CACHING VERIFIED - Search results properly cached with position information and score details. TTL working correctly (30 minutes). Caching enables accurate learning from recruiter interactions by preserving original search context."
+
   - task: "Job posting creation API"
     implemented: true
     working: true
