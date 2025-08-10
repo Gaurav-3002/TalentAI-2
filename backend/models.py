@@ -74,6 +74,77 @@ class AccessLogCreate(BaseModel):
     access_details: Optional[str] = None
 
 # Enhanced Candidate Models
+class PersonalInfo(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    portfolio: Optional[str] = None
+
+class Skills(BaseModel):
+    technical: List[str] = []
+    soft_skills: List[str] = []
+    languages: List[str] = []
+    certifications: List[str] = []
+
+class WorkExperience(BaseModel):
+    company: str
+    position: str
+    duration: str
+    location: Optional[str] = None
+    responsibilities: List[str] = []
+    achievements: List[str] = []
+
+class Education(BaseModel):
+    institution: str
+    degree: str
+    field: str
+    graduation_date: Optional[str] = None
+    gpa: Optional[str] = None
+
+class Project(BaseModel):
+    name: str
+    description: str
+    technologies: List[str] = []
+    link: Optional[str] = None
+
+class Certification(BaseModel):
+    name: str
+    issuer: str
+    date: Optional[str] = None
+    credential_id: Optional[str] = None
+
+class Language(BaseModel):
+    language: str
+    proficiency: str
+
+class Publication(BaseModel):
+    title: str
+    publication: str
+    date: Optional[str] = None
+
+class ParsedResumeData(BaseModel):
+    """Enhanced structured resume data from LLM parsing"""
+    personal_info: PersonalInfo = PersonalInfo()
+    summary: Optional[str] = None
+    skills: Skills = Skills()
+    work_experience: List[WorkExperience] = []
+    education: List[Education] = []
+    projects: List[Project] = []
+    certifications: List[Certification] = []
+    awards: List[str] = []
+    languages_spoken: List[Language] = []
+    publications: List[Publication] = []
+    extracted_years_experience: int = 0
+    parsing_confidence: float = 0.0
+    parsing_method: Optional[str] = None
+    model_used: Optional[str] = None
+    filename: Optional[str] = None
+    mime_type: Optional[str] = None
+    text_length: Optional[int] = None
+
 class Candidate(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -85,6 +156,11 @@ class Candidate(BaseModel):
     embedding: List[float] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: Optional[str] = None  # User ID who created this candidate
+    
+    # Enhanced fields for advanced parsing
+    parsed_resume: Optional[ParsedResumeData] = None
+    parsing_method: str = "basic"  # "basic" or "llm_advanced"
+    parsing_confidence: Optional[float] = None
 
 class CandidateResponse(BaseModel):
     """Response model that can handle PII redaction"""
