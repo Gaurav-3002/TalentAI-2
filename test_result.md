@@ -105,6 +105,18 @@
 user_problem_statement: "Sprint 6 — Security Features - Implement authentication system with JWT tokens, role-based access control (admin/recruiter/candidate), user management, access logging for compliance, PII redaction for blind screening, and protected endpoints requiring proper authorization."
 
 backend:
+  - task: "Vector DB & embeddings (Emergent LLM + FAISS)"
+    implemented: true
+    working: "NA"
+    file: "backend/embedding_service.py, backend/vector_store.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Replaced TF-IDF embeddings with Emergent Integrations embeddings via EMERGENT_LLM_KEY and added FAISS vector index with persistence. Updated resume/job creation to upsert vectors; search now leverages FAISS score when available with cosine fallback."
+
   - task: "Authentication system (register/login/JWT)"
     implemented: true
     working: true
