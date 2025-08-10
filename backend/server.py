@@ -894,6 +894,8 @@ async def create_job_posting(
         raise HTTPException(status_code=500, detail=f"Job posting creation failed: {str(e)}")
 
 @api_router.get("/search", response_model=List[MatchResult])
+@monitor_endpoint("candidate_search", "GET")
+@monitor_search_operation()
 async def search_candidates(
     request: Request,
     job_id: str, 
