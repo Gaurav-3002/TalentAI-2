@@ -49,6 +49,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from embedding_service import EmbeddingService
 from vector_store import FAISSService
 
+# Advanced Resume Parser
+from advanced_resume_parser import advanced_parser
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
