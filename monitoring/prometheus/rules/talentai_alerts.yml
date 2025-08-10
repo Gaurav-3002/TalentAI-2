@@ -1,0 +1,119 @@
+groups:
+  - name: talentai_slo_alerts
+    rules:
+      # SLO Alert: API Response Time
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.99, rate(talentai_api_request_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: talentai
+          slo: api_response_time
+        annotations:
+          summary: "TalentAI API 99th percentile response time is above 500ms"
+          description: "API response time 99th percentile is {{ $value }}s for the last 5 minutes"
+      
+      # SLO Alert: Resume Processing Success Rate
+      - alert: LowResumeProcessingSuccess
+        expr: (
+          rate(talentai_slo_resume_processing_success_total{status="success"}[1h]) /
+          rate(talentai_slo_resume_processing_success_total[1h])
+        ) * 100 < 95
+        for: 5m
+        labels:
+          severity: critical
+          service: talentai
+          slo: resume_processing_success
+        annotations:
+          summary: "TalentAI resume processing success rate is below 95%"
+          description: "Resume processing success rate is {{ $value | humanizePercentage }} over the last hour"
+      
+      # System Health Alerts
+      - alert: DatabaseDown
+        expr: talentai_system_health{component="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: talentai
+          component: database
+        annotations:
+          summary: "TalentAI Database is down"
+          description: "The TalentAI database component is unavailable"
+      
+      - alert: EmbeddingServiceDown
+        expr: talentai_system_health{component="embedding_service"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: talentai
+          component: embedding_service
+        annotations:
+          summary: "TalentAI Embedding Service is down"
+          description: "The TalentAI embedding service component is unavailable"
+      
+      # High Error Rate Alert
+      - alert: HighAPIErrorRate
+        expr: (
+          rate(talentai_api_requests_total{status_code=~"5.."}[5m]) /
+          rate(talentai_api_requests_total[5m])
+        ) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: talentai
+        annotations:
+          summary: "High API error rate in TalentAI"
+          description: "API error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+      
+      # Authentication Failure Alert
+      - alert: HighAuthFailureRate
+        expr: (
+          rate(talentai_auth_attempts_total{status!="success"}[10m]) /
+          rate(talentai_auth_attempts_total[10m])
+        ) * 100 > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: talentai
+          component: authentication
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate is {{ $value | humanizePercentage }} over the last 10 minutes"
+
+  - name: talentai_performance_alerts
+    rules:
+      # High Database Operation Latency
+      - alert: HighDatabaseLatency
+        expr: histogram_quantile(0.95, rate(talentai_db_operation_duration_seconds_bucket[5m])) > 1.0
+        for: 3m
+        labels:
+          severity: warning
+          service: talentai
+          component: database
+        annotations:
+          summary: "High database operation latency"
+          description: "95th percentile database operation latency is {{ $value }}s"
+      
+      # Low Search Results
+      - alert: LowSearchResults
+        expr: avg_over_time(talentai_search_results_count[10m]) < 1
+        for: 5m
+        labels:
+          severity: warning
+          service: talentai
+          component: search
+        annotations:
+          summary: "Low search results average"
+          description: "Average search results count is {{ $value }} over the last 10 minutes"
+      
+      # High Resume Processing Time
+      - alert: HighResumeProcessingTime
+        expr: histogram_quantile(0.95, rate(talentai_resume_processing_duration_seconds_bucket[5m])) > 30
+        for: 2m
+        labels:
+          severity: warning
+          service: talentai
+          component: resume_processing
+        annotations:
+          summary: "High resume processing time"
+          description: "95th percentile resume processing time is {{ $value }}s"
