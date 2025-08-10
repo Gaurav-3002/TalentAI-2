@@ -309,6 +309,81 @@ backend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED - Health check endpoint (GET /api/) working perfectly, returns proper JSON response. CORS middleware configured correctly for cross-origin requests. Database connectivity verified."
 
+  - task: "Learning-to-Rank Algorithm implementation"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/learning_to_rank.py, backend/models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented complete Learning-to-Rank system with reinforcement learning for dynamic weight optimization. Added new endpoints: GET /api/learning/weights (get optimal weights), POST /api/interactions (record recruiter interactions), GET /api/learning/metrics (admin only), POST /api/learning/retrain (admin only). Modified search algorithm to use ML-optimized weights instead of fixed weights. Added new database collections: recruiter_interactions, learning_weights, search_cache."
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE LEARNING-TO-RANK TESTING COMPLETED - All Learning-to-Rank features working perfectly with 100% test success rate (25/25 tests passed). Key findings: (1) Learning endpoints properly secured with role-based authentication - recruiters can access weights and record interactions, admins can access metrics and trigger retraining. (2) Dynamic search algorithm working - search now uses ML-optimized weights in score breakdown, gracefully falls back to default weights (0.4, 0.4, 0.2) when insufficient training data (<50 interactions). (3) Interaction recording system functional - successfully recorded click, shortlist, application interactions with proper reward calculation and position tracking. (4) Search result caching working - results cached for learning purposes with proper metadata. (5) Performance metrics endpoint provides comprehensive statistics including interaction breakdown and learning status. (6) Manual retraining capability functional. (7) PII redaction working in blind screening mode. (8) Error handling robust with proper validation. (9) System handles insufficient data gracefully with fallback behavior. All authentication, authorization, and data flow working as designed."
+
+  - task: "Learning-to-Rank endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ALL LEARNING ENDPOINTS TESTED SUCCESSFULLY - GET /api/learning/weights (recruiter access) returns current optimal weights with proper normalization. POST /api/interactions (recruiter access) records interactions with reward calculation. GET /api/learning/metrics (admin only) provides comprehensive performance statistics. POST /api/learning/retrain (admin only) triggers manual retraining. All endpoints properly secured with role-based access control."
+
+  - task: "Dynamic search weight optimization"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/learning_to_rank.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ DYNAMIC SEARCH WEIGHTS VERIFIED - Search endpoint now returns dynamic ML-optimized weights in score breakdown instead of fixed weights. Weights properly normalized (sum=1.0). System gracefully falls back to default weights (0.4, 0.4, 0.2) when insufficient training data. Search results include current weights used in score_breakdown for transparency."
+
+  - task: "Recruiter interaction tracking"
+    implemented: true
+    working: true
+    file: "backend/models.py, backend/learning_to_rank.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ INTERACTION TRACKING FULLY FUNCTIONAL - Successfully recorded multiple interaction types (click, shortlist, application, interview, hire) with proper reward values. Interactions include search position, session tracking, and original scores for learning. Reward calculation working: click=0.1, shortlist=0.3, application=0.7, interview=0.9, hire=1.0, reject=-0.5, with position bonuses."
+
+  - task: "Search result caching for learning"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ SEARCH CACHING SYSTEM WORKING - Search results properly cached in search_cache collection with 30-minute TTL. Cache includes candidate positions, scores, weights used, and search parameters. Multiple search variations (different k values, blind screening) all cached successfully for learning purposes."
+
+  - task: "Learning performance metrics"
+    implemented: true
+    working: true
+    file: "backend/learning_to_rank.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PERFORMANCE METRICS COMPREHENSIVE - Admin metrics endpoint provides total interactions, recent interactions, learning status, and detailed interaction breakdown by type with average rewards. Learning status correctly shows 'insufficient_data' when below threshold, enabling proper monitoring of system learning progress."
+
 frontend:
   - task: "Install Material UI and dependencies"
     implemented: true
