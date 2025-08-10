@@ -745,8 +745,23 @@ async def search_candidates(
                 request
             )
             
-            # Calculate semantic similarity
-            semantic_score = calculate_similarity(candidate.embedding, job_obj.embedding)
+            # Calculate semantic similarity (use FAISS for better retrieval; fallback to cosine)
+            semantic_score = 0.0
+            try:
+                faiss = getattr(app.state, "faiss", None)
+                if faiss and candidate.embedding and job_obj.embedding:
+                    import numpy as np
+                    # Use job embedding as query against candidate vector; score is inner-product ~ cosine
+                    res = await faiss.search(np.array(job_obj.embedding, dtype=float), k=1)
+                    if res:
+                        # If the top result corresponds to this candidate, use that score; otherwise fallback to cosine
+                        top = res[0]
+                        if top.get("metadata", {}).get("candidate_id") == candidate.id:
+                            semantic_score = float(top.get("score", 0.0))
+                if semantic_score == 0.0 and candidate.embedding and job_obj.embedding:
+                    semantic_score = calculate_similarity(candidate.embedding, job_obj.embedding)
+            except Exception as _e:
+                semantic_score = calculate_similarity(candidate.embedding, job_obj.embedding)
             
             # Calculate skill overlap
             skill_overlap = calculate_skill_overlap(candidate.skills, job_obj.required_skills)
