@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 class LearningToRankTester:
-    def __init__(self, base_url="https://b0f01cda-2385-4551-81cb-cf84983e55ee.preview.emergentagent.com"):
+    def __init__(self, base_url="https://6fe36641-10f0-44d7-aeb4-8b163d4bda5a.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
