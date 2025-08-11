@@ -33,22 +33,22 @@ class JobMatchingAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers, timeout=30)
+                response = requests.get(url, headers=headers, timeout=30, verify=False)
             elif method == 'POST':
                 if files or form_data:
                     # Send as form data (multipart/form-data)
-                    response = requests.post(url, data=data, files=files, headers=headers, timeout=30)
+                    response = requests.post(url, data=data, files=files, headers=headers, timeout=30, verify=False)
                 elif data:
                     headers['Content-Type'] = 'application/json'
-                    response = requests.post(url, json=data, headers=headers, timeout=30)
+                    response = requests.post(url, json=data, headers=headers, timeout=30, verify=False)
                 else:
-                    response = requests.post(url, headers=headers, timeout=30)
+                    response = requests.post(url, headers=headers, timeout=30, verify=False)
             elif method == 'PUT':
                 if data:
                     headers['Content-Type'] = 'application/json'
-                    response = requests.put(url, json=data, headers=headers, timeout=30)
+                    response = requests.put(url, json=data, headers=headers, timeout=30, verify=False)
                 else:
-                    response = requests.put(url, headers=headers, timeout=30)
+                    response = requests.put(url, headers=headers, timeout=30, verify=False)
 
             success = response.status_code == expected_status
             if success:
@@ -77,6 +77,9 @@ class JobMatchingAPITester:
             return False, {}
         except requests.exceptions.ConnectionError as e:
             print(f"❌ Failed - Connection error: {str(e)}")
+            return False, {}
+        except requests.exceptions.SSLError as e:
+            print(f"❌ Failed - SSL error: {str(e)}")
             return False, {}
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
