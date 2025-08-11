@@ -7,7 +7,7 @@ import time
 
 class ComprehensiveParsingTester:
     def __init__(self):
-        self.base_url = "https://6fe36641-10f0-44d7-aeb4-8b163d4bda5a.preview.emergentagent.com"
+        self.base_url = "https://9291765c-f58b-4431-ba39-972a15a67a25.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.auth_tokens = {}
         self.created_candidates = []

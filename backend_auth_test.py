@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 class BackendAuthTester:
-    def __init__(self, base_url="https://6fe36641-10f0-44d7-aeb4-8b163d4bda5a.preview.emergentagent.com"):
+    def __init__(self, base_url="https://9291765c-f58b-4431-ba39-972a15a67a25.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
